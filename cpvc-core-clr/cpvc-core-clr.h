@@ -100,19 +100,13 @@ namespace CPvC {
 
         int GetAudioBuffers(int samples, array<byte>^ channelA, array<byte>^ channelB, array<byte>^ channelC)
         {
-            pin_ptr<byte> ppChannelA = &channelA[0];
-            pin_ptr<byte> ppChannelB = &channelB[0];
-            pin_ptr<byte> ppChannelC = &channelC[0];
+            pin_ptr<byte> ppChannelA = (channelA != nullptr) ? &channelA[0] : nullptr;
+            pin_ptr<byte> ppChannelB = (channelB != nullptr) ? &channelB[0] : nullptr;
+            pin_ptr<byte> ppChannelC = (channelC != nullptr) ? &channelC[0] : nullptr;
 
             byte* ppChannels[3] = { ppChannelA, ppChannelB, ppChannelC };
 
             return _pCore->GetAudioBuffers(samples, ppChannels);
-        }
-
-        void AdvancePlayback(int samples)
-        {
-            byte* pChannels[3] = { nullptr, nullptr, nullptr };
-            _pCore->GetAudioBuffers(samples, pChannels);
         }
 
         void AudioSampleFrequency(dword frequency)
