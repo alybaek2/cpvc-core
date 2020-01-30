@@ -204,6 +204,7 @@ TEST(CoreTests, RunUntilVSync)
     // Verify - in one second, we should have 50 or 51 VSync's, roughly in line with a 50Hz refresh rate.
     ASSERT_GE(vSyncCount, 50);
     ASSERT_LE(vSyncCount, 51);
+
     delete pCore;
 }
 
@@ -222,5 +223,30 @@ TEST(CoreTests, KeyPress)
     ASSERT_FALSE(prevdown2);
     ASSERT_TRUE(prevdown3);
 
+    delete pCore;
+}
 
+// Ensures that for 8- and 16-bit registers declared in a "union/struct" fashion, the physical addresses
+// of each register is as expected (i.e. the physical address of the 16-bit register is the same as the
+// lower 8-bit register, and the upper 8-bit register immediately follows the lower). Adding this test as
+// I'm paranoid that struct member alignments might unexpectedly change...
+TEST(CoreTests, CheckAlignments)
+{
+    // Setup
+    Core* pCore = new Core();
+
+    // Verify
+    ASSERT_EQ(&pCore->F, (byte*)&pCore->AF);
+    ASSERT_EQ(&pCore->C, (byte*)&pCore->BC);
+    ASSERT_EQ(&pCore->E, (byte*)&pCore->DE);
+    ASSERT_EQ(&pCore->L, (byte*)&pCore->HL);
+    ASSERT_EQ(&pCore->R, (byte*)&pCore->IR);
+
+    ASSERT_EQ(&pCore->F + 1, &pCore->A);
+    ASSERT_EQ(&pCore->C + 1, &pCore->B);
+    ASSERT_EQ(&pCore->E + 1, &pCore->D);
+    ASSERT_EQ(&pCore->L + 1, &pCore->H);
+    ASSERT_EQ(&pCore->R + 1, &pCore->I);
+
+    delete pCore;
 }

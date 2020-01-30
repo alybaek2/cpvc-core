@@ -61,11 +61,11 @@ public:
     qword Ticks();
 
     // Z80 Registers.
-    word AF; byte& A = High(AF); byte& F = Low(AF);
-    word BC; byte& B = High(BC); byte& C = Low(BC);
-    word DE; byte& D = High(DE); byte& E = Low(DE);
-    word HL; byte& H = High(HL); byte& L = Low(HL);
-    word IR; byte& I = High(IR); byte& R = Low(IR);
+    union { word AF; struct { byte F; byte A; }; };
+    union { word BC; struct { byte C; byte B; }; };
+    union { word DE; struct { byte E; byte D; }; };
+    union { word HL; struct { byte L; byte H; }; };
+    union { word IR; struct { byte R; byte I; }; };
 
     word AF_;
     word BC_;
