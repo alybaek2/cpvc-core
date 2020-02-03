@@ -9,8 +9,7 @@ del roms\basic6128.rom
 fsutil file createnew roms\basic6128.rom 16384
 
 REM Build Debug and Release (x64).
-%BUILD_MSBUILD% cpvc.sln /t:Rebuild /p:Configuration=Release /p:Platform="x64"
-%BUILD_MSBUILD% cpvc.sln /t:Rebuild /p:Configuration=Debug /p:Platform="x64"
+%BUILD_MSBUILD% cpvc-core.sln /t:Rebuild /p:Configuration=Release /p:Platform="x64"
+%BUILD_MSBUILD% cpvc-core.sln /t:Rebuild /p:Configuration=Debug /p:Platform="x64"
 
-call .\buildkite\backup.bat cpvc-test\bin
 call .\buildkite\backup.bat x64

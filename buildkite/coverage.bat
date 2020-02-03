@@ -1,14 +1,12 @@
-call .\buildkite\restore.bat cpvc-test\bin
 call .\buildkite\restore.bat x64
 
 REM Generate code coverage files for cpvc-core (C++) and cpvc (C#).
 %BUILD_OPENCPPCOVERAGE% --modules cpvc-core-test --sources=cpvc-core --excluded_sources=cpvc-core-test --export_type cobertura:cpvc-core-coverage.xml "x64\Debug\cpvc-core-test.exe"
-%BUILD_OPENCOVER% -target:%BUILD_NUNIT% -targetargs:"cpvc-test\bin\x64\Debug\cpvc-test.dll" -filter:"+[cpvc]* +[cpvc-core-clr]* -[cpvc-test]*" -excludebyfile:"d:\agent\*";"c:\program files*";"*App.g.cs";"*.xaml.cs";"*.xaml";"*.Designer.cs" -hideskipped:All -register:user -output:cpvc-coverage.xml
 
 REM Generate ReportGenerator reports from the original Cobertura files.
-%BUILD_NUGET% restore
-".\packages\ReportGenerator.4.3.6\tools\net47\ReportGenerator.exe" -targetdir:coverage-report-xml -reporttypes:Xml -sourcedirs:. -reports:cpvc-coverage.xml;cpvc-core-coverage.xml
-".\packages\ReportGenerator.4.3.6\tools\net47\ReportGenerator.exe" -targetdir:. -reporttypes:Cobertura -sourcedirs:. -reports:cpvc-coverage.xml;cpvc-core-coverage.xml
+%BUILD_NUGET% install ReportGenerator -Version 4.3.6
+".\packages\ReportGenerator.4.3.6\tools\net47\ReportGenerator.exe" -targetdir:coverage-report-xml -reporttypes:Xml -sourcedirs:. -reports:cpvc-core-coverage.xml
+".\packages\ReportGenerator.4.3.6\tools\net47\ReportGenerator.exe" -targetdir:. -reporttypes:Cobertura -sourcedirs:. -reports:cpvc-core-coverage.xml
 
 REM Get rid of this file as it seems to cause duplicates in Coveralls.
 del coverage-report-xml\Summary.xml
@@ -30,7 +28,7 @@ REM Escape the double quotes.
 set COMMIT_MESSAGE=%COMMIT_MESSAGE:"=\"%
 
 REM Upload to Coveralls!
-%BUILD_COVERALLS% -i coverage-report-xml --reportgenerator --useRelativePaths --serviceName buildkite --serviceNumber %BUILDKITE_BUILD_NUMBER% --commitMessage "%COMMIT_MESSAGE%" --commitAuthor=%BUILDKITE_BUILD_CREATOR% --commitId %BUILDKITE_COMMIT% --commitBranch %BUILDKITE_BRANCH% --commitEmail %BUILDKITE_BUILD_CREATOR_EMAIL% --jobId=%BUILDKITE_JOB_ID%
+%BUILD_COVERALLS% -i coverage-report-xml --reportgenerator --useRelativePaths --serviceName buildkite --serviceNumber %BUILDKITE_BUILD_NUMBER% --commitMessage "%COMMIT_MESSAGE%" --commitAuthor=%BUILDKITE_BUILD_CREATOR% --commitId %BUILDKITE_COMMIT% --commitBranch %BUILDKITE_BRANCH% --commitEmail %BUILDKITE_BUILD_CREATOR_EMAIL% --jobId=%BUILDKITE_JOB_ID% --repoToken=%CORE_COVERALLS_REPO_TOKEN%
 
 REM Upload to Codecov... only do the OpenCover output; Codecov doesn't seem to be able to handle the OpenCppCoverage output, despite the fact it's supposed to be cobertura format.
-%BUILD_CODECOV% --branch %BUILDKITE_BRANCH% --build %BUILDKITE_BUILD_NUMBER% --sha %BUILDKITE_COMMIT% --file "Cobertura.xml"
+%BUILD_CODECOV% --branch %BUILDKITE_BRANCH% --build %BUILDKITE_BUILD_NUMBER% --sha %BUILDKITE_COMMIT% --file "Cobertura.xml" --token %CORE_CODECOV_TOKEN%
