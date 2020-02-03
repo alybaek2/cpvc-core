@@ -5,8 +5,8 @@ REM Generate code coverage files for cpvc-core (C++) and cpvc (C#).
 
 REM Generate ReportGenerator reports from the original Cobertura files.
 %BUILD_NUGET% install ReportGenerator -Version 4.3.6
-".\packages\ReportGenerator.4.3.6\tools\net47\ReportGenerator.exe" -targetdir:coverage-report-xml -reporttypes:Xml -sourcedirs:. -reports:cpvc-core-coverage.xml
-".\packages\ReportGenerator.4.3.6\tools\net47\ReportGenerator.exe" -targetdir:. -reporttypes:Cobertura -sourcedirs:. -reports:cpvc-core-coverage.xml
+".\ReportGenerator.4.3.6\tools\net47\ReportGenerator.exe" -targetdir:coverage-report-xml -reporttypes:Xml -sourcedirs:. -reports:cpvc-core-coverage.xml
+".\ReportGenerator.4.3.6\tools\net47\ReportGenerator.exe" -targetdir:. -reporttypes:Cobertura -sourcedirs:. -reports:cpvc-core-coverage.xml
 
 REM Get rid of this file as it seems to cause duplicates in Coveralls.
 del coverage-report-xml\Summary.xml
