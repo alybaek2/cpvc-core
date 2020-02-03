@@ -1,6 +1,6 @@
 call .\buildkite\restore.bat x64
 
-REM Generate code coverage files for cpvc-core (C++) and cpvc (C#).
+REM Generate code coverage files for cpvc-core (C++).
 %BUILD_OPENCPPCOVERAGE% --modules cpvc-core-test --sources=cpvc-core --excluded_sources=cpvc-core-test --export_type cobertura:cpvc-core-coverage.xml "x64\Debug\cpvc-core-test.exe"
 
 REM Generate ReportGenerator reports from the original Cobertura files.
