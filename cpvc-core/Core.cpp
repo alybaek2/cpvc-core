@@ -68,6 +68,11 @@ void Core::SetScreen(byte* pBuffer, word pitch, word height, word width)
     _pScreen = pBuffer;
 }
 
+byte* Core::GetScreen()
+{
+    return _pScreen;
+}
+
 int Core::GetAudioBuffers(int numSamples, byte* (&pChannels)[3])
 {
     return _audio.GetBuffers(numSamples, pChannels);

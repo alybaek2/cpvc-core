@@ -44,6 +44,7 @@ public:
     void LoadDisc(byte drive, const byte* pBuffer, int size);
 
     void SetScreen(byte* pBuffer, word pitch, word height, word width);
+    byte* GetScreen();
 
     int GetAudioBuffers(int numSamples, byte* (&pChannels)[3]);
     void SetFrequency(dword frequency);

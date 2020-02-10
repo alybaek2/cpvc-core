@@ -64,6 +64,11 @@ namespace CPvC {
             _pCore->SetScreen((byte*)pBuffer.ToPointer(), pitch, height, width);
         }
 
+        IntPtr GetScreen()
+        {
+            return (IntPtr)_pCore->GetScreen();
+        }
+
         bool KeyPress(byte keycode, bool down)
         {
             return _pCore->KeyPress(keycode, down);
