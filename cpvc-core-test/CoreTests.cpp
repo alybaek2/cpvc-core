@@ -8,7 +8,7 @@ TEST(CoreTests, SetLowerRom)
     Mem16k lowerRom;
     lowerRom.Fill(0xff);
 
-    Core* pCore = new Core();
+    std::unique_ptr<Core> pCore = std::make_unique<Core>();
     pCore->SetLowerRom(lowerRom);
 
     // Act
@@ -17,8 +17,6 @@ TEST(CoreTests, SetLowerRom)
 
     pCore->EnableLowerROM(false);
     byte disabledByte = pCore->ReadRAM(0x0000);
-
-    delete pCore;
 
     // Verify
     ASSERT_EQ(enabledByte, 0xff);
@@ -31,7 +29,7 @@ TEST(CoreTests, SetUpperRom)
     Mem16k upperRom;
     upperRom.Fill(0xff);
 
-    Core* pCore = new Core();
+    std::unique_ptr<Core> pCore = std::make_unique<Core>();
     pCore->SetUpperRom(0, upperRom); // Default selected upper rom slot is 0.
 
     // Act
@@ -40,8 +38,6 @@ TEST(CoreTests, SetUpperRom)
 
     pCore->EnableUpperROM(false);
     byte disabledByte = pCore->ReadRAM(0xc000);
-
-    delete pCore;
 
     // Verify
     ASSERT_EQ(enabledByte, 0xff);
@@ -53,7 +49,7 @@ TEST(CoreTests, SetUpperRom)
 TEST(CoreTests, SetSmallWidthScreen)
 {
     // Setup
-    Core* pCore = new Core();
+    std::unique_ptr<Core> pCore = std::make_unique<Core>();
 
     // Create a screen buffer with a normal height, but small width.
     constexpr word widthChars = 10;
@@ -80,7 +76,6 @@ TEST(CoreTests, SetSmallWidthScreen)
         ASSERT_EQ(pScreen[i], (i < widthPixels) ? 0 : 1);
     }
 
-    delete pCore;
     delete[] pScreen;
 }
 
@@ -89,7 +84,7 @@ TEST(CoreTests, SetSmallWidthScreen)
 TEST(CoreTests, SetSmallHeightScreen)
 {
     // Setup
-    Core* pCore = new Core();
+    std::unique_ptr<Core> pCore = std::make_unique<Core>();
 
     // Create a screen buffer with a normal width, but small height.
     constexpr word widthChars = 40;
@@ -115,7 +110,6 @@ TEST(CoreTests, SetSmallHeightScreen)
         ASSERT_EQ(pScreen[i], (i < widthPixels) ? 0 : 1);
     }
 
-    delete pCore;
     delete[] pScreen;
 }
 
@@ -124,14 +118,13 @@ TEST(CoreTests, SetSmallHeightScreen)
 TEST(CoreTests, StopAudioOverrun)
 {
     // Setup
-    Core* pCore = new Core();
+    std::unique_ptr<Core> pCore = std::make_unique<Core>();
 
     // Act
     byte stopReason = pCore->RunUntil(4000000, stopAudioOverrun);
 
     // Verify
     ASSERT_EQ(stopReason, stopAudioOverrun);
-    delete pCore;
 }
 
 // Ensures that if a core can no longer run due to audio overrun, running can be resumed by
@@ -139,7 +132,7 @@ TEST(CoreTests, StopAudioOverrun)
 TEST(CoreTests, ResumeAfterAudioOverrun)
 {
     // Setup
-    Core* pCore = new Core();
+    std::unique_ptr<Core> pCore = std::make_unique<Core>();
     pCore->RunUntil(4000000, stopAudioOverrun);
     byte buffers[3][4000];
     byte* pBuffers[3] = { buffers[0], buffers[1], buffers[2] };
@@ -151,7 +144,6 @@ TEST(CoreTests, ResumeAfterAudioOverrun)
 
     // Verify
     ASSERT_GT(pCore->Ticks(), beforeTicks);
-    delete pCore;
 }
 
 // Tests that a core can be serialized and deserialized back to the same state. Note this test could probably be improved to
@@ -160,7 +152,7 @@ TEST(CoreTests, ResumeAfterAudioOverrun)
 TEST(CoreTests, SerializeDeserialize)
 {
     // Setup
-    Core* pCore = new Core();
+    std::unique_ptr<Core> pCore = std::make_unique<Core>();
     StreamWriter writer;
     writer << (*pCore);
     bytevector state1;
@@ -168,7 +160,7 @@ TEST(CoreTests, SerializeDeserialize)
     StreamReader reader(writer);
 
     // Act
-    Core* pCore2 = new Core();
+    std::unique_ptr<Core> pCore2 = std::make_unique<Core>();
     reader >> (*pCore2);
     StreamWriter writer2;
     writer2 << (*pCore2);
@@ -182,15 +174,12 @@ TEST(CoreTests, SerializeDeserialize)
     {
         ASSERT_EQ(state1[i], state2[i]);
     }
-
-    delete pCore;
-    delete pCore2;
 }
 
 TEST(CoreTests, RunUntilVSync)
 {
     // Setup
-    Core* pCore = new Core();
+    std::unique_ptr<Core> pCore = std::make_unique<Core>();
     qword ticksEnd = pCore->Ticks() + 4000000;
     int vSyncCount = 0;
 
@@ -204,15 +193,13 @@ TEST(CoreTests, RunUntilVSync)
     // Verify - in one second, we should have 50 or 51 VSync's, roughly in line with a 50Hz refresh rate.
     ASSERT_GE(vSyncCount, 50);
     ASSERT_LE(vSyncCount, 51);
-
-    delete pCore;
 }
 
 TEST(CoreTests, KeyPress)
 {
     // Setup
-    Core* pCore = new Core();
- 
+    std::unique_ptr<Core> pCore = std::make_unique<Core>();
+
     // Act
     bool prevdown1 = pCore->KeyPress(65, true);
     bool prevdown2 = pCore->KeyPress(65, true);
@@ -222,8 +209,6 @@ TEST(CoreTests, KeyPress)
     ASSERT_TRUE(prevdown1);
     ASSERT_FALSE(prevdown2);
     ASSERT_TRUE(prevdown3);
-
-    delete pCore;
 }
 
 // Ensures that for 8- and 16-bit registers declared in a "union/struct" fashion, the physical addresses
@@ -233,7 +218,7 @@ TEST(CoreTests, KeyPress)
 TEST(CoreTests, CheckAlignments)
 {
     // Setup
-    Core* pCore = new Core();
+    std::unique_ptr<Core> pCore = std::make_unique<Core>();
 
     // Verify
     ASSERT_EQ(&pCore->F, (byte*)&pCore->AF);
@@ -247,6 +232,4 @@ TEST(CoreTests, CheckAlignments)
     ASSERT_EQ(&pCore->E + 1, &pCore->D);
     ASSERT_EQ(&pCore->L + 1, &pCore->H);
     ASSERT_EQ(&pCore->R + 1, &pCore->I);
-
-    delete pCore;
 }

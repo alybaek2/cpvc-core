@@ -16,7 +16,7 @@ TEST(GateArrayTests, SelectModeAndLowerAndUpperRoms)
         lowerRom.Fill(0x80);
 
         Memory memory;
-        GateArray* pGateArray = new GateArray(memory, interruptRequested, scanLineCount);
+        std::unique_ptr<GateArray> pGateArray = std::make_unique<GateArray>(memory, interruptRequested, scanLineCount);
         memory.Reset();
         memory.Write(0x0000, ramByte1);
         memory.Write(0xC000, ramByte2);
@@ -34,8 +34,6 @@ TEST(GateArrayTests, SelectModeAndLowerAndUpperRoms)
         ASSERT_EQ(p & 0x03, pGateArray->_mode);
         ASSERT_EQ(memory.Read(0x0000), (expectedLowerRomEnabled ? lowerRom[0] : ramByte1));
         ASSERT_EQ(memory.Read(0xC000), (expectedUpperRomEnabled ? upperRom[0] : ramByte2));
-
-        delete pGateArray;
     }
 }
 
@@ -44,7 +42,7 @@ TEST(GateArrayTests, SelectPenAndColour)
     bool interruptRequested;
     byte scanLineCount;
     Memory memory;
-    GateArray* pGateArray = new GateArray(memory, interruptRequested, scanLineCount);
+    std::unique_ptr<GateArray> pGateArray = std::make_unique<GateArray>(memory, interruptRequested, scanLineCount);
     memory.Reset();
 
     for (byte p : Range<byte>(0x00, 0x3F))
@@ -60,8 +58,6 @@ TEST(GateArrayTests, SelectPenAndColour)
             ASSERT_EQ(c & 0x1F, Bit(p, 4) ? pGateArray->_border : pGateArray->_pen[p & 0x1F]);
         }
     }
-
-    delete pGateArray;
 }
 
 TEST(GateArrayTests, Serialize)
@@ -70,7 +66,7 @@ TEST(GateArrayTests, Serialize)
     bool interruptRequested;
     byte scanLineCount;
     Memory memory;
-    GateArray* pGateArray = new GateArray(memory, interruptRequested, scanLineCount);
+    std::unique_ptr<GateArray> pGateArray = std::make_unique<GateArray>(memory, interruptRequested, scanLineCount);
 
     pGateArray->_selectedPen = 13;
     pGateArray->_mode = 3;
@@ -88,7 +84,7 @@ TEST(GateArrayTests, Serialize)
     writer << (*pGateArray);
 
     StreamReader reader(writer);
-    GateArray* pGateArray2 = new GateArray(memory, interruptRequested, scanLineCount);
+    std::unique_ptr<GateArray> pGateArray2 = std::make_unique<GateArray>(memory, interruptRequested, scanLineCount);
     reader >> (*pGateArray2);
 
     // Verify
@@ -97,8 +93,5 @@ TEST(GateArrayTests, Serialize)
     ASSERT_EQ(pGateArray->_border, pGateArray2->_border);
     ArraysEqual(pGateArray->_pen, pGateArray2->_pen);
     ArraysEqual(pGateArray->_renderedPenBytes, pGateArray2->_renderedPenBytes);
-
-    delete pGateArray;
-    delete pGateArray2;
 }
 
