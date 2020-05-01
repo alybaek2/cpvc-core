@@ -11,67 +11,62 @@ class Blob
 public:
     Blob()
     {
-        _pData = new byte[S];
+        _bytes.resize(S);
     }
 
-    Blob(const byte* pData)
+    Blob(const byte* pData) : Blob()
     {
-        _pData = new byte[S];
         Copy(pData);
     }
 
-    Blob(const Blob<S>& blob)
+    Blob(const Blob<S>& blob) : Blob(blob._bytes.data())
     {
-        _pData = new byte[S];
-        Copy(blob._pData);
     }
 
     ~Blob()
     {
-        delete[] _pData;
-        _pData = nullptr;
     }
 
     void Fill(byte value)
     {
-        memset(_pData, value, S);
+        memset(_bytes.data(), value, S);
     }
 
     operator byte* ()
     {
-        return _pData;
+        return _bytes.data();
     };
 
     Blob<S>& operator=(const Blob<S>& blob)
     {
-        Copy(blob._pData);
+        Copy(blob._bytes.data());
 
         return *this;
     }
 
     byte& operator[](int i)
     {
-        return _pData[i];
+        return _bytes[i];
     }
 
 private:
     void Copy(const byte* pData)
     {
-        memcpy(_pData, pData, S);
+        memcpy(_bytes.data(), pData, S);
     }
 
-    byte* _pData;
+    std::vector<byte> _bytes;
 
     friend StreamWriter& operator<<(StreamWriter& s, const Blob<S>& blob)
     {
-        s.WriteArray(blob._pData, S);
+        s.WriteArray(blob._bytes.data(), S);
 
         return s;
     }
 
     friend StreamReader& operator>>(StreamReader& s, Blob<S>& blob)
     {
-        s.ReadArray(blob._pData, S);
+        s.ReadArray(blob._bytes.data(), S);
 
         return s;
     }
