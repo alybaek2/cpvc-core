@@ -37,6 +37,11 @@ public:
     Core(IBus* pBus);
     ~Core();
 
+    std::map<qword, std::unique_ptr<Core>> _snapshots;
+
+    void SaveSnapshot(qword id);
+    void LoadSnapshot(qword id);
+    void CopyFrom(const Core& core);
     void Init();
     void Reset();
     bool KeyPress(byte keycode, bool down);
@@ -154,8 +159,8 @@ private:
     bool Zero() { return ((F &  flagZ) != 0); }
     bool HalfCarry() { return ((F &  flagH) != 0); }
     bool ParityOverflow() { return ((F & flagPV) != 0); }
-    bool AddSubtract() { return ((F &  flagN) != 0); }
-    bool Carry() { return ((F &  flagC) != 0); }
+    bool AddSubtract() { return ((F & flagN) != 0); }
+    bool Carry() { return ((F & flagC) != 0); }
 
     byte Carry8(word w)
     {

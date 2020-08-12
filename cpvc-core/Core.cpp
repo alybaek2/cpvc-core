@@ -1566,3 +1566,61 @@ StreamReader& operator>>(StreamReader& s, Core& core)
 
     return s;
 }
+
+void Core::CopyFrom(const Core& core)
+{
+    AF = core.AF;
+    BC = core.BC;
+    DE = core.DE;
+    HL = core.HL;
+    IR = core.IR;
+
+    AF_ = core.AF_;
+    BC_ = core.BC_;
+    DE_ = core.DE_;
+    HL_ = core.HL_;
+
+    IX = core.IX;
+    IY = core.IY;
+
+    PC = core.PC;
+    SP = core.SP;
+
+    _iff1 = core._iff1;
+    _iff2 = core._iff2;
+    _interruptRequested = core._interruptRequested;
+    _interruptMode = core._interruptMode;
+    _eiDelay = core._eiDelay;
+    _halted = core._halted;
+
+    _memory.CopyFrom(core._memory);
+    _fdc.CopyFrom(core._fdc);
+    _keyboard.CopyFrom(core._keyboard);
+    _crtc.CopyFrom(core._crtc);
+    _psg.CopyFrom(core._psg);
+    _ppi.CopyFrom(core._ppi);
+    _gateArray.CopyFrom(core._gateArray);
+    _tape.CopyFrom(core._tape);
+
+    _ticks = core._ticks;
+
+    _frequency = core._frequency;
+    _audioTickTotal = core._audioTickTotal;
+    _audioTicksToNextSample = core._audioTicksToNextSample;
+    _audioSampleCount = core._audioSampleCount;
+}
+
+void Core::LoadSnapshot(qword id)
+{
+    CopyFrom(*_snapshots[id]);
+}
+
+void Core::SaveSnapshot(qword id)
+{
+    if (_snapshots.find(id) == _snapshots.end())
+    {
+        _snapshots[id] = std::make_unique<Core>();
+    }
+
+    _snapshots[id]->CopyFrom(*this);
+}

@@ -17,6 +17,15 @@ Track::Track()
 
 Track::Track(const Track& track)
 {
+    (*this) = track;
+}
+
+Track::~Track()
+{
+};
+
+Track& Track::operator=(const Track& track)
+{
     _id = track._id;
     _side = track._side;
     _sectorSize = track._sectorSize;
@@ -27,16 +36,15 @@ Track::Track(const Track& track)
     _recordingMode = track._recordingMode;
     _numSectors = track._numSectors;
     _recordingMode = track._recordingMode;
-    _sectors.clear();
+
+    _sectors.resize(track._sectors.size());
     for (size_t i = 0; i < track._sectors.size(); i++)
     {
-        _sectors.push_back(track._sectors.at(i));
+        _sectors[i] = track._sectors[i];
     }
-}
 
-Track::~Track()
-{
-};
+    return (*this);
+}
 
 StreamWriter& operator<<(StreamWriter& s, const Track& track)
 {

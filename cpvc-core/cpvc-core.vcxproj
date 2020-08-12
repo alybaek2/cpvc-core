@@ -120,7 +120,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Audio.h" />
-    <ClInclude Include="Blob.h" />
     <ClInclude Include="Bus.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="Core.h" />

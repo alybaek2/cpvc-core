@@ -91,6 +91,17 @@ public:
         return (*this);
     }
 
+    template<class T, int S>
+    StreamReader& operator>>(std::array<T, S>& arr)
+    {
+        for (size_t x = 0; x < S; x++)
+        {
+            (*this) >> arr[x];
+        }
+
+        return (*this);
+    }
+
     template<typename T>
     StreamReader& operator>>(std::vector<T>& vector)
     {

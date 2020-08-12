@@ -14,6 +14,8 @@ public:
     Track(const Track& track);
     ~Track();
 
+    Track& operator=(const Track& track);
+
     // Track info...
     byte _id;
     byte _side;

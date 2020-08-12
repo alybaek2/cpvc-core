@@ -123,6 +123,14 @@ public:
     FDC();
     ~FDC();
 
+    void CopyFrom(const FDC& fdc)
+    {
+        //_drives[0] = fdc._drives[0];
+        //_drives[1] = fdc._drives[1];
+        _drives[0].CopyFrom(fdc._drives[0]);
+        _drives[1].CopyFrom(fdc._drives[1]);
+    }
+
     // Note that while the FDC technically does support 4 drives, the DS1 (Drive Select 1)
     // pin is physically disconnected on the CPC, meaning only 2 drives can be supported.
     FDD _drives[2];

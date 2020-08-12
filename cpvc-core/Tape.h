@@ -64,6 +64,39 @@ public:
     Tape();
     ~Tape();
 
+    void CopyFrom(const Tape& tape)
+    {
+        _level = tape._level;
+        _motor = tape._motor;
+        _playing = tape._playing;
+
+        _size = tape._size;
+        _buffer = tape._buffer;
+
+        _currentBlockIndex = tape._currentBlockIndex;
+        _blockIndex = tape._blockIndex;
+        _phase = tape._phase;
+        _pulsesRemaining = tape._pulsesRemaining;
+        _dataIndex = tape._dataIndex;
+        _levelChanged = tape._levelChanged;
+        _dataByte = tape._dataByte;
+        _remainingBits = tape._remainingBits;
+        _pulseIndex = tape._pulseIndex;
+        _pause = tape._pause;
+
+        _dataBlock = tape._dataBlock;
+        _speedBlock = tape._speedBlock;
+
+        if (tape._pBuffer == nullptr)
+        {
+            _pBuffer = nullptr;
+        }
+        else
+        {
+            _pBuffer = _buffer.data();
+        }
+    }
+
     bool _level;
     bool _motor;
     bool _playing;

@@ -11,6 +11,22 @@ public:
     PPI(IPSG& psg, Keyboard& keyboard, bool* pVSync, bool* pTapeMotor, bool* pTapeLevel);
     ~PPI();
 
+    void CopyFrom(const PPI& ppi)
+    {
+        _printerReady = ppi._printerReady;
+        _exp = ppi._exp;
+        _refreshRate = ppi._refreshRate;
+        _manufacturer = ppi._manufacturer;
+
+        _tapeWriteData = ppi._tapeWriteData;
+        _tapeMotor = ppi._tapeMotor;
+
+        _portA = ppi._portA;
+        _portB = ppi._portB;
+        _portC = ppi._portC;
+        _control = ppi._control;
+    }
+
 private:
     enum IO
     {

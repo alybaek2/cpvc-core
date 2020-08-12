@@ -14,6 +14,15 @@ Sector::Sector()
 
 Sector::Sector(const Sector& sector)
 {
+    (*this) = sector;
+}
+
+Sector::~Sector()
+{
+}
+
+Sector& Sector::operator=(const Sector& sector)
+{
     _track = sector._track;
     _side = sector._side;
     _id = sector._id;
@@ -22,15 +31,12 @@ Sector::Sector(const Sector& sector)
     _fdcRegister2 = sector._fdcRegister2;
 
     _dataLength = sector._dataLength;
-    _data.clear();
-    for (size_t i = 0; i < sector._data.size(); i++)
-    {
-        _data.push_back(sector._data.at(i));
-    }
-}
 
-Sector::~Sector()
-{
+    // Optimization for CopyFrom...
+    _data.resize(sector._data.size());
+    memcpy(_data.data(), sector._data.data(), _data.size());
+
+    return (*this);
 }
 
 word Sector::DataLength()

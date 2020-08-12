@@ -10,6 +10,13 @@ public:
     Keyboard();
     ~Keyboard();
 
+    void CopyFrom(const Keyboard& keyboard)
+    {
+        memcpy(_matrix, keyboard._matrix, sizeof(_matrix));
+        memcpy(_matrixClash, keyboard._matrixClash, sizeof(_matrixClash));
+        _selectedLine = keyboard._selectedLine;
+    }
+
     void Reset();
     bool KeyPress(byte line, byte bit, bool down);
     byte ReadSelectedLine();

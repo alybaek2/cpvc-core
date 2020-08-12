@@ -5,10 +5,10 @@
 TEST(MemoryTests, Configurations)
 {
     Mem16k lowerROM;
-    lowerROM.Fill(0x12);
+    lowerROM.fill(0x12);
 
     Mem16k upperROM;
-    upperROM.Fill(0xFE);
+    upperROM.fill(0xFE);
 
     byte configs[8][4] = {
         { 0, 1, 2, 3 },
@@ -75,10 +75,10 @@ TEST(MemoryTests, SelectROM)
 {
     // Setup
     Mem16k basicROM;
-    basicROM.Fill(0x12);
+    basicROM.fill(0x12);
 
     Mem16k testROM;
-    testROM.Fill(0xFE);
+    testROM.fill(0xFE);
 
     for (byte selectedRom : testBytes)
     {
@@ -161,9 +161,9 @@ TEST(MemoryTests, SerializeLowerUpperEnabed)
     memory.Reset();
 
     Mem16k lowerROM;
-    lowerROM.Fill(0x01);
+    lowerROM.fill(0x01);
     Mem16k upperROM;
-    upperROM.Fill(0x02);
+    upperROM.fill(0x02);
 
     memory.EnableLowerROM(true);
     memory.EnableUpperROM(true);
@@ -197,11 +197,11 @@ TEST(MemoryTests, Reset)
     Memory memory;
 
     Mem16k lowerROM;
-    lowerROM.Fill(0x01);
+    lowerROM.fill(0x01);
     Mem16k upperROM0;
-    upperROM0.Fill(0x02);
+    upperROM0.fill(0x02);
     Mem16k upperROM1;
-    upperROM1.Fill(0x03);
+    upperROM1.fill(0x03);
 
     memory.EnableLowerROM(false);
     memory.EnableUpperROM(false);

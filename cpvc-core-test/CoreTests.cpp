@@ -2,11 +2,53 @@
 #include "../cpvc-core/Core.h"
 #include "helpers.h"
 
+bytevector CoreState(Core* pCore)
+{
+    StreamWriter sw;
+    sw << *pCore;
+    bytevector state;
+    sw.CopyTo(state);
+
+    return state;
+}
+
+void SetCoreNonDefaultValues(Core* pCore)
+{
+    pCore->AF = 0x0123;
+    pCore->BC = 0x4567;
+    pCore->DE = 0x89ab;
+    pCore->HL = 0xcdef;
+    pCore->IR = 0x0246;
+
+    pCore->AF_ = 0x3210;
+    pCore->BC_ = 0x7654;
+    pCore->DE_ = 0x89ab;
+    pCore->HL_ = 0xfedc;
+
+    pCore->IX = 0xaabb;
+    pCore->IY = 0xccdd;
+
+    pCore->PC = 0x1122;
+    pCore->SP = 0x3344;
+
+    pCore->_iff1 = true;
+    pCore->_iff2 = true;
+    pCore->_interruptRequested = true;
+    pCore->_interruptMode = 0xcd;
+    pCore->_eiDelay = 0xef;
+    pCore->_halted = true;
+
+    for (dword addr = 0; addr < 0x10000; addr++)
+    {
+        pCore->WriteRAM((word) addr, Low(Low(addr)));
+    }
+}
+
 TEST(CoreTests, SetLowerRom)
 {
     // Setup
     Mem16k lowerRom;
-    lowerRom.Fill(0xff);
+    lowerRom.fill(0xff);
 
     std::unique_ptr<Core> pCore = std::make_unique<Core>();
     pCore->SetLowerRom(lowerRom);
@@ -27,7 +69,7 @@ TEST(CoreTests, SetUpperRom)
 {
     // Setup
     Mem16k upperRom;
-    upperRom.Fill(0xff);
+    upperRom.fill(0xff);
 
     std::unique_ptr<Core> pCore = std::make_unique<Core>();
     pCore->SetUpperRom(0, upperRom); // Default selected upper rom slot is 0.
@@ -232,4 +274,21 @@ TEST(CoreTests, CheckAlignments)
     ASSERT_EQ(&pCore->E + 1, &pCore->D);
     ASSERT_EQ(&pCore->L + 1, &pCore->H);
     ASSERT_EQ(&pCore->R + 1, &pCore->I);
+}
+
+TEST(CoreTests, SaveAndLoadSnapshot)
+{
+    // Setup
+    std::unique_ptr<Core> pCore = std::make_unique<Core>();
+    SetCoreNonDefaultValues(pCore.get());
+    bytevector initialState = CoreState(pCore.get());
+
+    // Act
+    pCore->SaveSnapshot(0);
+    pCore->Reset();
+    pCore->LoadSnapshot(0);
+
+    // Verify
+    bytevector finalState = CoreState(pCore.get());
+    ASSERT_EQ(initialState, finalState);
 }

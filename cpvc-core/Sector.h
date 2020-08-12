@@ -11,6 +11,8 @@ public:
     Sector(const Sector& sector);
     ~Sector();
 
+    Sector& operator=(const Sector& sector);
+
     // Sector info...
     byte _track;
     byte _side;

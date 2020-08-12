@@ -94,10 +94,10 @@ TEST(BusTests, Read)
 TEST(BusTests, Write)
 {
     Mem16k testRom;
-    testRom.Fill(0x80);
+    testRom.fill(0x80);
 
     Mem16k originalRom;
-    originalRom.Fill(0xCD);
+    originalRom.fill(0xCD);
 
     for (word addr : testBusAddresses)
     {

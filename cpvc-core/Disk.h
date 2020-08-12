@@ -14,6 +14,8 @@ public:
     Disk(const Disk& disk);
     ~Disk();
 
+    Disk& operator=(const Disk& disk);
+
     std::vector<Track> _tracks;
 
     bool LoadDisk(const byte* pBuffer, int size);

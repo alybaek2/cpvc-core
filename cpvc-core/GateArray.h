@@ -12,6 +12,15 @@ public:
     GateArray(Memory& memory, bool& interruptRequested, byte& scanLineCount);
     ~GateArray();
 
+    void CopyFrom(const GateArray& gateArray)
+    {
+        _selectedPen = gateArray._selectedPen;
+        memcpy(_pen, gateArray._pen, sizeof(_pen));
+        _border = gateArray._border;
+        _mode = gateArray._mode;
+        memcpy(_renderedPenBytes, gateArray._renderedPenBytes, sizeof(_renderedPenBytes));
+    }
+
     Memory& _memory;
     byte _selectedPen;
     byte _pen[16];

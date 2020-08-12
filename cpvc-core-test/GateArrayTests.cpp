@@ -13,7 +13,7 @@ TEST(GateArrayTests, SelectModeAndLowerAndUpperRoms)
         byte scanLineCount;
 
         Mem16k lowerRom;
-        lowerRom.Fill(0x80);
+        lowerRom.fill(0x80);
 
         Memory memory;
         std::unique_ptr<GateArray> pGateArray = std::make_unique<GateArray>(memory, interruptRequested, scanLineCount);
@@ -21,7 +21,7 @@ TEST(GateArrayTests, SelectModeAndLowerAndUpperRoms)
         memory.Write(0x0000, ramByte1);
         memory.Write(0xC000, ramByte2);
         Mem16k upperRom;
-        upperRom.Fill(0xFF);
+        upperRom.fill(0xFF);
         memory.SetUpperROM(0x00, upperRom);
         memory.SelectROM(0x00);
         memory.SetLowerROM(lowerRom);

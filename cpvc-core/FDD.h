@@ -27,6 +27,14 @@ public:
     FDD();
     ~FDD();
 
+    void CopyFrom(const FDD& fdd)
+    {
+        _currentSector = fdd._currentSector;
+        _currentTrack = fdd._currentTrack;
+        _hasDisk = fdd._hasDisk;
+        _disk = fdd._disk;
+    }
+
     // Member variables describing the location of the read head.
     byte _currentSector;
     size_t _currentTrack;

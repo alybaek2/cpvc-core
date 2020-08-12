@@ -2,13 +2,20 @@
 
 #include <map>
 #include <memory>
+#include <array>
 #include "common.h"
 #include "StreamReader.h"
 #include "StreamWriter.h"
-#include "Blob.h"
 
-typedef Blob<0x4000> Mem16k;
+typedef std::array<byte, 0x4000> Mem16k;
 
+inline Mem16k CreateMem16k(byte* pBuffer)
+{
+    Mem16k mem;
+    memcpy(mem.data(), pBuffer, mem.size());
+
+    return mem;
+}
 
 class Memory
 {
@@ -17,11 +24,34 @@ public:
     {
         Reset();
 
-        _lowerRom.Fill(0);
-        _upperRom.Fill(0);
+        _lowerRom.fill(0);
+        _upperRom.fill(0);
     };
 
     ~Memory() {};
+
+    void CopyFrom(const Memory& memory)
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            _banks[i] = memory._banks[i];
+        }
+
+        _ramConfig = memory._ramConfig;
+        _lowerRomEnabled = memory._lowerRomEnabled;
+        _lowerRom = memory._lowerRom;
+        _upperRomEnabled = memory._upperRomEnabled;
+        _upperRom = memory._upperRom;
+        _selectedUpperRom = memory._selectedUpperRom;
+
+        _roms.clear();
+        for (std::pair<byte, Mem16k> x : memory._roms)
+        {
+            _roms[x.first] = x.second;
+        }
+
+        ConfigureRAM();
+    }
 
 private:
     Mem16k _banks[8];
@@ -29,7 +59,7 @@ private:
     byte* _writeRAM[4];
 
     byte _ramConfig;
-    byte _ramConfigs[8][4] = {
+    const byte _ramConfigs[8][4] = {
         { 0, 1, 2, 3 },
         { 0, 1, 2, 7 },
         { 4, 5, 6, 7 },
@@ -53,7 +83,7 @@ public:
     {
         for (Mem16k& mem : _banks)
         {
-            mem.Fill(0);
+            mem.fill(0);
         }
 
         _lowerRomEnabled = true;
@@ -119,7 +149,7 @@ public:
             _selectedUpperRom = 0;
             if (_roms.find(0) == _roms.end())
             {
-                _upperRom.Fill(0);
+                _upperRom.fill(0);
             }
         }
         else
@@ -139,17 +169,17 @@ public:
     {
         for (byte b = 0; b < 4; b++)
         {
-            _readRAM[b] = _writeRAM[b] = _banks[_ramConfigs[_ramConfig][b]];
+            _readRAM[b] = _writeRAM[b] = _banks[_ramConfigs[_ramConfig][b]].data();
         }
 
         if (_lowerRomEnabled)
         {
-            _readRAM[0] = _lowerRom;
+            _readRAM[0] = _lowerRom.data();
         }
 
         if (_upperRomEnabled)
         {
-            _readRAM[3] = _upperRom;
+            _readRAM[3] = _upperRom.data();
         }
     }
 

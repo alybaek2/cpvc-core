@@ -6,11 +6,22 @@ Disk::Disk()
 
 Disk::Disk(const Disk& disk)
 {
-    _tracks = disk._tracks;
+    (*this) = disk;
 }
 
 Disk::~Disk()
 {
+}
+
+Disk& Disk::operator=(const Disk& disk)
+{
+    _tracks.resize(disk._tracks.size());
+    for (size_t i = 0; i < disk._tracks.size(); i++)
+    {
+        _tracks[i] = disk._tracks[i];
+    }
+
+    return *this;
 }
 
 bool Disk::LoadDisk(const byte* pBuffer, int size)

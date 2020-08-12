@@ -27,6 +27,16 @@ namespace CPvC {
             _pCore = nullptr;
         }
 
+        void LoadSnapshot(UInt64 id)
+        {
+            _pCore->LoadSnapshot(id);
+        }
+
+        void SaveSnapshot(UInt64 id)
+        {
+            _pCore->SaveSnapshot(id);
+        }
+
         void LoadLowerROM(array<byte>^ lowerRom)
         {
             if (lowerRom->Length != 0x4000)
@@ -35,7 +45,7 @@ namespace CPvC {
             }
 
             pin_ptr<byte> pBuffer = &lowerRom[0];
-            _pCore->SetLowerRom(Mem16k(pBuffer));
+            _pCore->SetLowerRom(CreateMem16k(pBuffer));
         }
 
         void LoadUpperROM(byte slotIndex, array<byte>^ rom)
@@ -46,7 +56,7 @@ namespace CPvC {
             }
 
             pin_ptr<byte> pBuffer = &rom[0];
-            _pCore->SetUpperRom(slotIndex, Mem16k(pBuffer));
+            _pCore->SetUpperRom(slotIndex, CreateMem16k(pBuffer));
         }
 
         byte RunUntil(UInt64 stopTicks, byte stopReason)
