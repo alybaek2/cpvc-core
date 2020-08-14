@@ -154,6 +154,8 @@ private:
     word _scrHeight;
     word _scrWidth;
 
+    bytevector _screen;
+
 #pragma region "Flag helpers"
     bool Sign() { return ((F &  flagS) != 0); }
     bool Zero() { return ((F &  flagZ) != 0); }

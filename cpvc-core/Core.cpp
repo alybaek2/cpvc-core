@@ -1608,6 +1608,16 @@ void Core::CopyFrom(const Core& core)
     _audioTickTotal = core._audioTickTotal;
     _audioTicksToNextSample = core._audioTicksToNextSample;
     _audioSampleCount = core._audioSampleCount;
+
+    if (core._pScreen != nullptr)
+    {
+        _scrHeight = core._scrHeight;
+        _scrPitch = core._scrPitch;
+        _scrWidth = core._scrWidth;
+        _screen.resize(_scrHeight * _scrPitch);
+        _pScreen = _screen.data();
+        memcpy(_pScreen, core._pScreen, _screen.size());
+    }
 }
 
 void Core::LoadSnapshot(qword id)
