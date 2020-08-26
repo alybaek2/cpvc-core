@@ -1609,23 +1609,45 @@ void Core::CopyFrom(const Core& core)
     _audioTicksToNextSample = core._audioTicksToNextSample;
     _audioSampleCount = core._audioSampleCount;
 
-    if (core._pScreen != nullptr)
+    // This is a bit of a hack; need to refactor later. Assume if our _pScreen
+    // is null, we're a copy of the real core. Copying from a core with a null
+    // _pScreen means we should copy from core._screen into _pScreen.
+    if (_pScreen == nullptr && core._pScreen != nullptr)
     {
+        // We're a copy!
         _scrHeight = core._scrHeight;
         _scrPitch = core._scrPitch;
         _scrWidth = core._scrWidth;
         _screen.resize(_scrHeight * _scrPitch);
-        _pScreen = _screen.data();
-        memcpy(_pScreen, core._pScreen, _screen.size());
+
+        // Should probably have a check to ensure the size of the buffer pointed
+        // to by _pScreen is what we expect (i.e. _scrHeight * _scrPitch).
+        memcpy(_screen.data(), core._pScreen, _screen.size());
+    }
+    else if (_pScreen != nullptr && core._pScreen == nullptr)
+    {
+        // We're "the" core... copy from core._screen to _pBuffer.
+        _scrHeight = core._scrHeight;
+        _scrPitch = core._scrPitch;
+        _scrWidth = core._scrWidth;
+
+        memcpy(_pScreen, core._screen.data(), core._screen.size());
     }
 }
 
-void Core::LoadSnapshot(qword id)
+bool Core::LoadSnapshot(int id)
 {
+    if (_snapshots.find(id) == _snapshots.end())
+    {
+        return false;
+    }
+
     CopyFrom(*_snapshots[id]);
+
+    return true;
 }
 
-void Core::SaveSnapshot(qword id)
+void Core::SaveSnapshot(int id)
 {
     if (_snapshots.find(id) == _snapshots.end())
     {

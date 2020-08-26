@@ -27,12 +27,12 @@ namespace CPvC {
             _pCore = nullptr;
         }
 
-        void LoadSnapshot(UInt64 id)
+        bool LoadSnapshot(int id)
         {
-            _pCore->LoadSnapshot(id);
+            return _pCore->LoadSnapshot(id);
         }
 
-        void SaveSnapshot(UInt64 id)
+        void SaveSnapshot(int id)
         {
             _pCore->SaveSnapshot(id);
         }

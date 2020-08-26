@@ -37,10 +37,11 @@ public:
     Core(IBus* pBus);
     ~Core();
 
-    std::map<qword, std::unique_ptr<Core>> _snapshots;
+    std::map<int, std::unique_ptr<Core>> _snapshots;
 
-    void SaveSnapshot(qword id);
-    void LoadSnapshot(qword id);
+    void SaveSnapshot(int id);
+    bool LoadSnapshot(int id);
+
     void CopyFrom(const Core& core);
     void Init();
     void Reset();
