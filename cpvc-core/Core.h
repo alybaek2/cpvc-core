@@ -156,6 +156,8 @@ private:
     word _scrWidth;
 
     bytevector _screen;
+    bytevector _audioBuffer;
+
 
 #pragma region "Flag helpers"
     bool Sign() { return ((F &  flagS) != 0); }

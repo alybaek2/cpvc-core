@@ -8,6 +8,8 @@ public:
     Audio();
     ~Audio();
 
+    void Reset();
+    
     // Writes a single sample to each of the three audio channels.
     void WriteSample(byte (&amplitudes)[3]);
 

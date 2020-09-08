@@ -239,6 +239,10 @@ void Core::AudioRender()
         }
 
         _audio.WriteSample(amps);
+
+        _audioBuffer.push_back(amps[0]);
+        _audioBuffer.push_back(amps[1]);
+        _audioBuffer.push_back(amps[2]);
     }
 
     _audioTickTotal++;
@@ -1633,6 +1637,25 @@ void Core::CopyFrom(const Core& core)
 
         memcpy(_pScreen, core._screen.data(), core._screen.size());
     }
+
+    _audioBuffer.resize(core._audioBuffer.size());
+    memcpy(_audioBuffer.data(), core._audioBuffer.data(), _audioBuffer.size());
+    
+    // Copy audio
+    _audio.Reset();
+    for (bytevector::const_reverse_iterator r = core._audioBuffer.crbegin(); r != core._audioBuffer.crend(); )
+    {
+        byte sample[3];
+
+        sample[2] = *r;
+        r++;
+        sample[1] = *r;
+        r++;
+        sample[0] = *r;
+        r++;
+
+        _audio.WriteSample(sample);
+    }
 }
 
 bool Core::LoadSnapshot(int id)
@@ -1655,4 +1678,5 @@ void Core::SaveSnapshot(int id)
     }
 
     _snapshots[id]->CopyFrom(*this);
+    _audioBuffer.clear();
 }

@@ -12,6 +12,12 @@ Audio::~Audio()
 {
 }
 
+void Audio::Reset()
+{
+    _writePosition = 0;
+    _readPosition = 0;
+}
+
 void Audio::WriteSample(byte(&amplitudes)[3])
 {
     qword wrappedPosition = _writePosition % _audioBufferSize;
