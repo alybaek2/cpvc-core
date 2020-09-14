@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.h"
+#include <queue>
 
 #include "Memory.h"
 #include "PPI.h"
@@ -53,6 +54,7 @@ public:
     byte* GetScreen();
 
     int GetAudioBuffers(int numSamples, byte* (&pChannels)[3]);
+    int GetAudioSamples(int bufferSize, word* pBuffer);
     void SetFrequency(dword frequency);
 
     void EnableLowerROM(bool enabled);
@@ -158,6 +160,7 @@ private:
     bytevector _screen;
     bytevector _audioBuffer;
 
+    std::queue<word> _audioSamples;
 
 #pragma region "Flag helpers"
     bool Sign() { return ((F &  flagS) != 0); }

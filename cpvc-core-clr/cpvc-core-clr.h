@@ -124,6 +124,13 @@ namespace CPvC {
             return _pCore->GetAudioBuffers(samples, ppChannels);
         }
 
+        int GetAudioSamples(array<word>^ buffer)
+        {
+            pin_ptr<word> pBuffer = (buffer != nullptr) ? &buffer[0] : nullptr;
+
+            return _pCore->GetAudioSamples(buffer->Length, pBuffer);
+        }
+
         void AudioSampleFrequency(dword frequency)
         {
             _pCore->SetFrequency(frequency);

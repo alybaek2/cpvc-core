@@ -243,9 +243,36 @@ void Core::AudioRender()
         _audioBuffer.push_back(amps[0]);
         _audioBuffer.push_back(amps[1]);
         _audioBuffer.push_back(amps[2]);
+
+        word sample =
+            (amps[0] & 0x0f) |
+            ((amps[1] & 0x0f) << 4) |
+            ((amps[2] & 0x0f) << 8);
+
+        _audioSamples.push(sample);
     }
 
     _audioTickTotal++;
+}
+
+int Core::GetAudioSamples(int bufferSize, word* pBuffer)
+{
+    if (pBuffer == nullptr)
+    {
+        return 0;
+    }
+
+    int sampleIndex = 0;
+    while (sampleIndex < bufferSize && !_audioSamples.empty())
+    {
+        word sample = _audioSamples.front();
+        _audioSamples.pop();
+
+        pBuffer[sampleIndex] = sample;
+        sampleIndex++;
+    }
+
+    return sampleIndex;
 }
 
 byte Core::BusRead(const word& addr)
