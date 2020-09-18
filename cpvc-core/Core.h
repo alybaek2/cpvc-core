@@ -1,13 +1,11 @@
 #pragma once
 
 #include "common.h"
-#include <queue>
 
 #include "Memory.h"
 #include "PPI.h"
 #include "PSG.h"
 #include "Keyboard.h"
-#include "Audio.h"
 #include "GateArray.h"
 #include "Tape.h"
 #include "FDC.h"
@@ -27,7 +25,6 @@ constexpr byte flagC = 0x01;     // Carry flag
 
 // Bitmask for conditions to stop execution in RunUntil.
 constexpr byte stopNone = 0x00;
-constexpr byte stopAudioOverrun = 0x01;
 constexpr byte stopVSync = 0x02;
 
 // Class representing the CPC's hardware.
@@ -53,8 +50,6 @@ public:
     void SetScreen(byte* pBuffer, word pitch, word height, word width);
     byte* GetScreen();
 
-    int GetAudioBuffers(int numSamples, byte* (&pChannels)[3]);
-    int GetAudioSamples(int bufferSize, word* pBuffer);
     void SetFrequency(dword frequency);
 
     void EnableLowerROM(bool enabled);
@@ -62,7 +57,7 @@ public:
     void EnableUpperROM(bool enabled);
     void SetUpperRom(byte slot, Mem16k& rom);
 
-    byte RunUntil(qword stopTicks, byte stopReason);
+    byte RunUntil(qword stopTicks, byte stopReason, wordvector* pAudioSamples = nullptr);
 
     byte ReadRAM(const word& addr);
     void WriteRAM(const word& addr, byte b);
@@ -132,7 +127,6 @@ private:
 
     // Audio members.
     dword _frequency = 48000;
-    Audio _audio;
     dword _audioTickTotal;
     dword _audioTicksToNextSample;
     dword _audioSampleCount;
@@ -158,9 +152,8 @@ private:
     word _scrWidth;
 
     bytevector _screen;
-    bytevector _audioBuffer;
 
-    std::queue<word> _audioSamples;
+    wordvector* _pAudioSamples;
 
 #pragma region "Flag helpers"
     bool Sign() { return ((F &  flagS) != 0); }

@@ -46,6 +46,8 @@ void Core::Init()
     _scrHeight = 0;
     _scrWidth = 0;
 
+    _pAudioSamples = nullptr;
+
     _fdc.Init();
     _tape.Eject();
 
@@ -73,11 +75,6 @@ byte* Core::GetScreen()
     return _pScreen;
 }
 
-int Core::GetAudioBuffers(int numSamples, byte* (&pChannels)[3])
-{
-    return _audio.GetBuffers(numSamples, pChannels);
-}
-
 void Core::SetFrequency(dword frequency)
 {
     _frequency = frequency;
@@ -86,15 +83,12 @@ void Core::SetFrequency(dword frequency)
     _audioTicksToNextSample = 0;
 }
 
-byte Core::RunUntil(qword stopTicks, byte stopReason)
+byte Core::RunUntil(qword stopTicks, byte stopReason, wordvector* pAudioSamples)
 {
+    _pAudioSamples = pAudioSamples;
+
     while (_ticks < stopTicks)
     {
-        if ((stopReason & stopAudioOverrun) != 0 && _audio.Overrun())
-        {
-            return stopAudioOverrun;
-        }
-
         bool vSyncBefore = _crtc._inVSync;
         Step(stopReason);
 
@@ -103,6 +97,8 @@ byte Core::RunUntil(qword stopTicks, byte stopReason)
             return stopVSync;
         }
     }
+
+    _pAudioSamples = nullptr;
 
     return 0;
 }
@@ -229,50 +225,27 @@ void Core::AudioRender()
         double denom = (double)_frequency;
         _audioTicksToNextSample = (dword)(num / denom);
 
-        byte amps[3];
-        _psg.Amplitudes(amps);
-
-        if (_tape._motor && (_tape._level || _ppi._tapeWriteData))
+        if (_pAudioSamples != nullptr)
         {
-            // If the tape level for either reading or writing is high, set the amplitudes to the maximum (15).
-            amps[0] = amps[1] = amps[2] = 15;
+            byte amps[3];
+            _psg.Amplitudes(amps);
+
+            if (_tape._motor && (_tape._level || _ppi._tapeWriteData))
+            {
+                // If the tape level for either reading or writing is high, set the amplitudes to the maximum (15).
+                amps[0] = amps[1] = amps[2] = 15;
+            }
+
+            word sample =
+                (amps[0] & 0x0f) |
+                ((amps[1] & 0x0f) << 4) |
+                ((amps[2] & 0x0f) << 8);
+
+            _pAudioSamples->push_back(sample);
         }
-
-        _audio.WriteSample(amps);
-
-        _audioBuffer.push_back(amps[0]);
-        _audioBuffer.push_back(amps[1]);
-        _audioBuffer.push_back(amps[2]);
-
-        word sample =
-            (amps[0] & 0x0f) |
-            ((amps[1] & 0x0f) << 4) |
-            ((amps[2] & 0x0f) << 8);
-
-        _audioSamples.push(sample);
     }
 
     _audioTickTotal++;
-}
-
-int Core::GetAudioSamples(int bufferSize, word* pBuffer)
-{
-    if (pBuffer == nullptr)
-    {
-        return 0;
-    }
-
-    int sampleIndex = 0;
-    while (sampleIndex < bufferSize && !_audioSamples.empty())
-    {
-        word sample = _audioSamples.front();
-        _audioSamples.pop();
-
-        pBuffer[sampleIndex] = sample;
-        sampleIndex++;
-    }
-
-    return sampleIndex;
 }
 
 byte Core::BusRead(const word& addr)
@@ -1664,25 +1637,6 @@ void Core::CopyFrom(const Core& core)
 
         memcpy(_pScreen, core._screen.data(), core._screen.size());
     }
-
-    _audioBuffer.resize(core._audioBuffer.size());
-    memcpy(_audioBuffer.data(), core._audioBuffer.data(), _audioBuffer.size());
-    
-    // Copy audio
-    _audio.Reset();
-    for (bytevector::const_reverse_iterator r = core._audioBuffer.crbegin(); r != core._audioBuffer.crend(); )
-    {
-        byte sample[3];
-
-        sample[2] = *r;
-        r++;
-        sample[1] = *r;
-        r++;
-        sample[0] = *r;
-        r++;
-
-        _audio.WriteSample(sample);
-    }
 }
 
 bool Core::LoadSnapshot(int id)
@@ -1705,5 +1659,4 @@ void Core::SaveSnapshot(int id)
     }
 
     _snapshots[id]->CopyFrom(*this);
-    _audioBuffer.clear();
 }

@@ -7,7 +7,6 @@ namespace CPvC {
     {
     public:
         static const byte None = stopNone;
-        static const byte AudioOverrun = stopAudioOverrun;
         static const byte VSync = stopVSync;
     };
 }

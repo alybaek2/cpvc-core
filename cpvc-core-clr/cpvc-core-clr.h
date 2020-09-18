@@ -59,9 +59,23 @@ namespace CPvC {
             _pCore->SetUpperRom(slotIndex, CreateMem16k(pBuffer));
         }
 
-        byte RunUntil(UInt64 stopTicks, byte stopReason)
+        byte RunUntil(UInt64 stopTicks, byte stopReason, System::Collections::Generic::List<UInt16>^ samples)
         {
-            return _pCore->RunUntil(stopTicks, stopReason);
+            wordvector tempSamples;
+            tempSamples.reserve(200);
+            byte reason = _pCore->RunUntil(stopTicks, stopReason, &tempSamples);
+
+            if (samples != nullptr)
+            {
+                samples->Capacity += (int)tempSamples.size();
+
+                for (word sample : tempSamples)
+                {
+                    samples->Add(sample);
+                }
+            }
+
+            return reason;
         } 
 
         void Reset()
@@ -111,24 +125,6 @@ namespace CPvC {
 
             pin_ptr<byte> pDiscBuffer = &discBuffer[0];
             _pCore->LoadDisc(drive, pDiscBuffer, discBuffer->Length);
-        }
-
-        int GetAudioBuffers(int samples, array<byte>^ channelA, array<byte>^ channelB, array<byte>^ channelC)
-        {
-            pin_ptr<byte> ppChannelA = (channelA != nullptr) ? &channelA[0] : nullptr;
-            pin_ptr<byte> ppChannelB = (channelB != nullptr) ? &channelB[0] : nullptr;
-            pin_ptr<byte> ppChannelC = (channelC != nullptr) ? &channelC[0] : nullptr;
-
-            byte* ppChannels[3] = { ppChannelA, ppChannelB, ppChannelC };
-
-            return _pCore->GetAudioBuffers(samples, ppChannels);
-        }
-
-        int GetAudioSamples(array<word>^ buffer)
-        {
-            pin_ptr<word> pBuffer = (buffer != nullptr) ? &buffer[0] : nullptr;
-
-            return _pCore->GetAudioSamples(buffer->Length, pBuffer);
         }
 
         void AudioSampleFrequency(dword frequency)

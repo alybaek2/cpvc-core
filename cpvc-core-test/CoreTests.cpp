@@ -108,7 +108,7 @@ TEST(CoreTests, SetSmallWidthScreen)
     //       the screen buffer. Note that we need to first run the core for 16 scanlines to
     //       compensate for overscan, hence the 16 * 0x40 below (0x40 chars is the default
     //       "Horizontal Total" for the CPC).
-    pCore->RunUntil(((16 * 0x40) + widthChars + 1) * 4, 0);
+    pCore->RunUntil(((16 * 0x40) + widthChars + 1) * 4, 0, nullptr);
 
     // Verify
     for (word i = 0; i < bufsize; i++)
@@ -142,7 +142,7 @@ TEST(CoreTests, SetSmallHeightScreen)
     // Act - run the core for two lines plus the number of overscan lines. Adding overscan lines is necessary
     //       to ensure we actually write into the screen buffer. The default total width is 0x40 chars, so
     //       double this for two lines. Note that one CRTC "char" is written every 4 ticks.
-    pCore->RunUntil((0x40 * (2 + 16)) * 4, 0);
+    pCore->RunUntil((0x40 * (2 + 16)) * 4, 0, nullptr);
 
     // Verify - ensure that only a single line was written.
     for (word i = 0; i < bufsize; i++)
@@ -153,39 +153,6 @@ TEST(CoreTests, SetSmallHeightScreen)
     }
 
     delete[] pScreen;
-}
-
-// Ensure that after running a core for a while, calls to RunUntil should eventually return
-// with stopAudioOverrun.
-TEST(CoreTests, StopAudioOverrun)
-{
-    // Setup
-    std::unique_ptr<Core> pCore = std::make_unique<Core>();
-
-    // Act
-    byte stopReason = pCore->RunUntil(4000000, stopAudioOverrun);
-
-    // Verify
-    ASSERT_EQ(stopReason, stopAudioOverrun);
-}
-
-// Ensures that if a core can no longer run due to audio overrun, running can be resumed by
-// reading data from the audio buffers.
-TEST(CoreTests, ResumeAfterAudioOverrun)
-{
-    // Setup
-    std::unique_ptr<Core> pCore = std::make_unique<Core>();
-    pCore->RunUntil(4000000, stopAudioOverrun);
-    byte buffers[3][4000];
-    byte* pBuffers[3] = { buffers[0], buffers[1], buffers[2] };
-    qword beforeTicks = pCore->Ticks();
-
-    // Act
-    pCore->GetAudioBuffers(4000, pBuffers);
-    pCore->RunUntil(4000000, stopAudioOverrun);
-
-    // Verify
-    ASSERT_GT(pCore->Ticks(), beforeTicks);
 }
 
 // Tests that a core can be serialized and deserialized back to the same state. Note this test could probably be improved to
@@ -228,7 +195,7 @@ TEST(CoreTests, RunUntilVSync)
     // Act
     while (pCore->Ticks() < ticksEnd)
     {
-        pCore->RunUntil(ticksEnd, stopVSync);
+        pCore->RunUntil(ticksEnd, stopVSync, nullptr);
         vSyncCount++;
     }
 
