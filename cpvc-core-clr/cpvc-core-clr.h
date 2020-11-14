@@ -37,6 +37,21 @@ namespace CPvC {
             _pCore->SaveSnapshot(id);
         }
 
+        int CreateSnapshot(int parentId)
+        {
+            return _pCore->CreateSnapshot(parentId);
+        }
+
+        void DeleteSnapshot(int id)
+        {
+            _pCore->DeleteSnapshot(id);
+        }
+
+        bool RevertToSnapshot(int id)
+        {
+            return _pCore->RevertToSnapshot(id);
+        }
+
         void LoadLowerROM(array<byte>^ lowerRom)
         {
             if (lowerRom->Length != 0x4000)

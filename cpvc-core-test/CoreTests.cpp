@@ -259,3 +259,4 @@ TEST(CoreTests, SaveAndLoadSnapshot)
     bytevector finalState = CoreState(pCore.get());
     ASSERT_EQ(initialState, finalState);
 }
+

@@ -17,6 +17,10 @@ inline Mem16k CreateMem16k(byte* pBuffer)
     return mem;
 }
 
+struct CoreSnapshot;
+struct SnapshotZ80Mem;
+struct Snapshot2nd64kAndRoms;
+
 class Memory
 {
 public:
@@ -30,7 +34,7 @@ public:
 
     ~Memory() {};
 
-    void CopyFrom(const Memory& memory)
+    void CopyFrom(const Memory& memory, bool skipBanks = false)
     {
         for (int i = 0; i < 8; i++)
         {
@@ -50,8 +54,26 @@ public:
             _roms[x.first] = x.second;
         }
 
+        _romIds.clear();
+        for (std::pair<byte, int> x : memory._romIds)
+        {
+            _romIds[x.first] = x.second;
+        }
+
         ConfigureRAM();
     }
+
+    void SaveTo(SnapshotZ80Mem& snapshot);
+    void LoadFrom(SnapshotZ80Mem& snapshot);
+
+    void SaveTo(Snapshot2nd64kAndRoms& snapshot);
+    void LoadFrom(Snapshot2nd64kAndRoms& snapshot);
+
+    // ROM cache
+    static int _nextRomId;
+    static std::map<int, Mem16k> _romCache;
+    static int GetRomId(const Mem16k& rom);
+    static bool GetRom(int id, Mem16k& rom);
 
 private:
     Mem16k _banks[8];
@@ -72,11 +94,14 @@ private:
 
     bool _lowerRomEnabled;
     Mem16k _lowerRom;
+    int _lowerRomId;
 
     bool _upperRomEnabled;
     Mem16k _upperRom;
+    int _upperRomId;
     byte _selectedUpperRom;
     std::map<byte, Mem16k> _roms;
+    std::map<byte, int> _romIds;
 
 public:
     void Reset()
@@ -113,6 +138,7 @@ public:
 
     void SetLowerROM(const Mem16k& lowerRom)
     {
+        _lowerRomId = GetRomId(lowerRom);
         _lowerRom = lowerRom;
     }
 
@@ -124,6 +150,7 @@ public:
 
     void SetUpperROM(byte slot, const Mem16k& rom)
     {
+        _romIds[slot] = GetRomId(rom);
         _roms[slot] = rom;
         if (_selectedUpperRom == slot)
         {
@@ -133,6 +160,7 @@ public:
 
     void RemoveUpperROM(byte slot)
     {
+        _romIds.erase(slot);
         _roms.erase(slot);
     }
 
@@ -205,6 +233,17 @@ public:
         s >> memory._selectedUpperRom;
         s >> memory._lowerRom;
         s >> memory._roms;
+
+
+        // Cache roms...
+        memory._lowerRomId = Memory::GetRomId(memory._lowerRom);
+
+        memory._romIds.clear();
+        for (std::pair<byte, Mem16k> i : memory._roms)
+        {
+            memory._romIds[i.first] = Memory::GetRomId(memory._roms[i.first]);
+        }
+
 
         // Probably more consistent to serialize each read and write bank separately, as it's not
         // guaranteed that they will be in sync with _ramConfig, even though they should be!

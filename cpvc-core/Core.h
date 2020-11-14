@@ -13,6 +13,8 @@
 #include "Bus.h"
 #include "IBus.h"
 
+#include "CoreSnapshot.h"
+
 // Z80 flags
 constexpr byte flagS = 0x80;     // Sign flag
 constexpr byte flagZ = 0x40;     // Zero flag
@@ -35,12 +37,19 @@ public:
     Core(IBus* pBus);
     ~Core();
 
-    std::map<int, std::unique_ptr<Core>> _snapshots;
+    std::map<int, std::unique_ptr<CoreSnapshot>> _snapshots;
+    int _lastSnapshotId;
 
     void SaveSnapshot(int id);
     bool LoadSnapshot(int id);
 
-    void CopyFrom(const Core& core);
+    std::map<int, std::shared_ptr<CoreSnapshot>> _newSnapshots;
+    int _nextNewSnapshotId;
+
+    int CreateSnapshot(int parentId);
+    void DeleteSnapshot(int id);
+    bool RevertToSnapshot(int id);
+
     void Init();
     void Reset();
     bool KeyPress(byte keycode, bool down);
