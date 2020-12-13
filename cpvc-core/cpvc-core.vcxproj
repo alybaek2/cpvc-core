@@ -119,12 +119,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Blob.h" />
     <ClInclude Include="Bus.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="Core.h" />
     <ClInclude Include="CoreSnapshot.h" />
     <ClInclude Include="CRTC.h" />
     <ClInclude Include="Disk.h" />
+    <ClInclude Include="Encode.h" />
     <ClInclude Include="FDC.h" />
     <ClInclude Include="FDD.h" />
     <ClInclude Include="GateArray.h" />
@@ -141,12 +143,14 @@
     <ClInclude Include="Track.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Blob.cpp" />
     <ClCompile Include="Bus.cpp" />
     <ClCompile Include="Core.cpp">
       <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">All</AssemblerOutput>
     </ClCompile>
     <ClCompile Include="CRTC.cpp" />
     <ClCompile Include="Disk.cpp" />
+    <ClCompile Include="Encode.cpp" />
     <ClCompile Include="FDC.cpp" />
     <ClCompile Include="FDD.cpp" />
     <ClCompile Include="GateArray.cpp" />

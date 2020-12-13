@@ -75,6 +75,12 @@
     <ClInclude Include="CoreSnapshot.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Encode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Blob.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PSG.cpp">
@@ -117,6 +123,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Memory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Encode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Blob.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

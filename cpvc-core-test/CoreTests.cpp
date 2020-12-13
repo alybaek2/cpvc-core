@@ -242,21 +242,3 @@ TEST(CoreTests, CheckAlignments)
     ASSERT_EQ(&pCore->L + 1, &pCore->H);
     ASSERT_EQ(&pCore->R + 1, &pCore->I);
 }
-
-TEST(CoreTests, SaveAndLoadSnapshot)
-{
-    // Setup
-    std::unique_ptr<Core> pCore = std::make_unique<Core>();
-    SetCoreNonDefaultValues(pCore.get());
-    bytevector initialState = CoreState(pCore.get());
-
-    // Act
-    pCore->SaveSnapshot(0);
-    pCore->Reset();
-    pCore->LoadSnapshot(0);
-
-    // Verify
-    bytevector finalState = CoreState(pCore.get());
-    ASSERT_EQ(initialState, finalState);
-}
-

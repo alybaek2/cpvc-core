@@ -1,4 +1,5 @@
 #include "Core.h"
+#include "CoreSnapshot.h"
 
 Core::Core() : _pBus(&_bus)
 {
@@ -60,6 +61,7 @@ void Core::Init()
 
     _nextNewSnapshotId = 0;
     _newSnapshots.clear();
+    _lastSnapshot = nullptr;
 }
 
 bool Core::KeyPress(byte keycode, bool down)
@@ -1577,318 +1579,15 @@ StreamReader& operator>>(StreamReader& s, Core& core)
     return s;
 }
 
-bool Core::LoadSnapshot(int id)
-{
-    if (_snapshots.find(id) == _snapshots.end())
-    {
-        return false;
-    }
-
-    // Do the Z80 and mem and other stuff...
-    SnapshotZ80Mem& s = *( _snapshots[id]->z80MemStuff.Full());
-
-    AF = s.AF;
-    BC = s.BC;
-    DE = s.DE;
-    HL = s.HL;
-    IR = s.IR;
-    AF_ = s.AF_;
-    BC_ = s.BC_;
-    DE_ = s.DE_;
-    HL_ = s.HL_;
-    IX = s.IX;
-    IY = s.IY;
-    SP = s.SP;
-    PC = s.PC;
-    _iff1 = s._iff1;
-    _iff2 = s._iff2;
-    _interruptRequested = s._interruptRequested;
-    _interruptMode = s._interruptMode;
-    _eiDelay = s._eiDelay;
-    _halted = s._halted;
-
-    _memory.LoadFrom(s);
-    _memory.LoadFrom(_snapshots[id]->mem2nd64k);
-
-    _fdc.CopyFrom(_snapshots[id]->_fdc);
-    _keyboard.CopyFrom(_snapshots[id]->_keyboard);
-    _crtc.CopyFrom(_snapshots[id]->_crtc);
-    _psg.CopyFrom(_snapshots[id]->_psg);
-    _ppi.CopyFrom(_snapshots[id]->_ppi);
-    _gateArray.CopyFrom(_snapshots[id]->_gateArray);
-    _tape.CopyFrom(_snapshots[id]->_tape);
-
-    _ticks = _snapshots[id]->_ticks;
-    _frequency = _snapshots[id]->_frequency;
-    _audioTickTotal = _snapshots[id]->_audioTickTotal;
-    _audioTicksToNextSample = _snapshots[id]->_audioTicksToNextSample;
-    _audioSampleCount = _snapshots[id]->_audioSampleCount;
-
-    // Screen
-    _scrHeight = _snapshots[id]->_scrHeight;
-    _scrPitch = _snapshots[id]->_scrPitch;
-    _scrWidth = _snapshots[id]->_scrWidth;
-
-    memcpy(_pScreen, _snapshots[id]->_screen.data(), _snapshots[id]->_screen.size());
-
-    return true;
-}
-
-int FindNextRunOfSameBytes(byte* pBytes, int size, int start, int minRunLength, int& runLength)
-{
-    int runstart = start;
-    int i = start + 1;
-    int length = 1;
-    bool same = true;
-    while (i < size)
-    {
-        if (pBytes[i] == pBytes[runstart])
-        {
-            i++;
-        }
-        else
-        {
-            // Big enough to report as a run?
-            //i++;
-            if ((i - runstart) >= 5)
-            {
-                runLength = i - runstart;
-                return runstart;
-            }
-
-            runstart = i;
-            same = true;
-        }
-    }
-
-    if ((i - runstart) >= 5)
-    {
-        runLength = i - runstart;
-        return runstart;
-    }
-
-    // None found
-    runLength = 0;
-    return -1;
-}
-
-void AddRun(byte* pBytes, bytevector& encoded, int start, int end, bool same)
-{
-    if (same)
-    {
-        encoded.push_back(0x01); // Use run length coding!
-        word len = (word)(end - start + 1);
-        encoded.push_back(Low(len));
-        encoded.push_back(High(len));
-        encoded.push_back(pBytes[start]);
-    }
-    else
-    {
-        encoded.push_back(0x00); // Don't use run length coding!
-        word len = (word)(end - start + 1);
-        encoded.push_back(Low(len));
-        encoded.push_back(High(len));
-
-        for (int j = start; j <= end; j++)
-        {
-            encoded.push_back(pBytes[j]);
-        }
-    }
-}
-
-bool RunLengthDecode(const bytevector& encodedBytes, bytevector& decoded)
-{
-    decoded.clear();
-
-    int i = 0;
-    while (i < encodedBytes.size())
-    {
-        if (encodedBytes[i] == 0)
-        {
-            word len = (word)(encodedBytes[i + 1] + 0x0100 * encodedBytes[i + 2]);
-
-            for (int j = 0; j < len; j++)
-            {
-                decoded.push_back(encodedBytes[i + 2 + j]);
-            }
-
-            i += 3;
-            i += len;
-        }
-        else
-        {
-            word len = (word)(encodedBytes[i + 1] + 0x0100 * encodedBytes[i + 2]);
-
-            for (int j = 0; j < len; j++)
-            {
-                decoded.push_back(encodedBytes[i + 3]);
-            }
-
-            i += 4;
-        }
-    }
-
-    return true;
-}
-
-bool RunLengthEncode(byte* pBuffer, int size, bytevector& encoded)
-{
-    if (size == 0)
-    {
-        return false;
-    }
-    
-    encoded.clear();
-
-    int start = 0;
-    byte b = pBuffer[0];
-    bool runFound = true;
-
-    int runLength = 0;
-
-    int i = 0;
-    while (i < size)
-    {
-        int runIndex = FindNextRunOfSameBytes(pBuffer, size, i, 5, runLength);
-        if (runIndex == -1)
-        {
-            // Can't find one. Just add the rest of the buffer!
-            AddRun(pBuffer, encoded, i, size - 1, false);
-            break;
-        }
-        else
-        {
-            AddRun(pBuffer, encoded, i, runIndex - 1, false);
-            AddRun(pBuffer, encoded, runIndex, runIndex - 1 + runLength, true);
-
-            i = runIndex + runLength;
-        }
-
-        i++;
-    }
-
-    return true;
-}
-
-void Core::SaveSnapshot(int id)
-{
-    if (_snapshots.find(id) == _snapshots.end())
-    {
-        _snapshots[id] = std::make_unique<CoreSnapshot>();
-    }
-    else
-    {
-        // We're about to overwrite an existing snapshot! If there are any other snapshots which have this one as its
-        // parent, replace diffs with full images!
-        for (std::pair<const int, std::unique_ptr<CoreSnapshot>>& i : _snapshots)
-        {
-            if (i.second->parentSnapshotId == id)
-            {
-                // Switch diffs to full images!
-                CoreSnapshot& parentSnapshot = *_snapshots[id];
-                CoreSnapshot& snapshot = *i.second;
-            }
-        }
-    }
-
-    // Do the Z80 and mem and other stuff...
-    //if (_snapshots[id]->z80MemStuff == nullptr)
-    {
-        _snapshots[id]->z80MemStuff = SubSnapshot<SnapshotZ80Mem>(nullptr);
-    }
-
-    SnapshotZ80Mem& s = *(_snapshots[id]->z80MemStuff.Full());
-
-    s.AF = AF;
-    s.BC = BC;
-    s.DE = DE;
-    s.HL = HL;
-    s.IR = IR;
-    s.AF_ = AF_;
-    s.BC_ = BC_;
-    s.DE_ = DE_;
-    s.HL_ = HL_;
-    s.IX = IX;
-    s.IY = IY;
-    s.SP = SP;
-    s.PC = PC;
-    s._iff1 = _iff1;
-    s._iff2 = _iff2;
-    s._interruptRequested = _interruptRequested;
-    s._interruptMode = _interruptMode;
-    s._eiDelay = _eiDelay;
-    s._halted = _halted;
-
-    _memory.SaveTo(s);
-    _memory.SaveTo(_snapshots[id]->mem2nd64k);
-
-    _snapshots[id]->_fdc.CopyFrom(_fdc);
-    _snapshots[id]->_keyboard.CopyFrom(_keyboard);
-    _snapshots[id]->_crtc.CopyFrom(_crtc);
-    _snapshots[id]->_psg.CopyFrom(_psg);
-    _snapshots[id]->_ppi.CopyFrom(_ppi);
-    _snapshots[id]->_gateArray.CopyFrom(_gateArray);
-    _snapshots[id]->_tape.CopyFrom(_tape);
-
-    _snapshots[id]->_ticks = _ticks;
-    _snapshots[id]->_frequency = _frequency;
-    _snapshots[id]->_audioTickTotal = _audioTickTotal;
-    _snapshots[id]->_audioTicksToNextSample = _audioTicksToNextSample;
-    _snapshots[id]->_audioSampleCount = _audioSampleCount;
-
-    // Screen
-    _snapshots[id]->_scrHeight = _scrHeight;
-    _snapshots[id]->_scrWidth = _scrWidth;
-    _snapshots[id]->_scrPitch = _scrPitch;
-    _snapshots[id]->_screen.resize(_scrHeight * _scrPitch);
-
-    memcpy(_snapshots[id]->_screen.data(), _pScreen, _snapshots[id]->_screen.size());
-
-    _snapshots[id]->parentSnapshotId = _lastSnapshotId;
-    _lastSnapshotId = id;
-
-    // Switch the parent snapshot to use diffs...
-    if (_snapshots[id]->parentSnapshotId >= 0)
-    {
-        CoreSnapshot& snapshot = *_snapshots[id];
-        CoreSnapshot* parentSnapshot = _snapshots[_snapshots[id]->parentSnapshotId].get();
-        SnapshotZ80Mem* snapshotZ80Mem = snapshot.z80MemStuff.Full().get();
-        SnapshotZ80Mem* parentSnapshotZ80Mem = parentSnapshot->z80MemStuff.Full().get();
-
-        bytevector xored;
-        xored.resize(sizeof(SnapshotZ80Mem));
-        byte* dst = xored.data();
-        //byte* src = (byte*)(&parentSnapshot);
-        memcpy(xored.data(), (byte*)parentSnapshotZ80Mem, sizeof(SnapshotZ80Mem));
-
-        int xcount = 0;
-        for (int i = 0; i < sizeof(SnapshotZ80Mem); i++)
-        {
-            xored[i] ^= ((byte*)snapshotZ80Mem)[i];
-
-            if (xored[i] == 0)
-            {
-                xcount++;
-            }
-        }
-
-        RunLengthEncode(xored.data(), xored.size(), parentSnapshot->z80MemDiff);
-    }
-}
-
-int Core::CreateSnapshot(int parentId)
+int Core::CreateSnapshot()
 {
     std::shared_ptr<CoreSnapshot> snapshot = std::make_shared<CoreSnapshot>();
 
-    std::map<int, std::shared_ptr<CoreSnapshot>>::iterator i = _newSnapshots.find(parentId);
-    if (i != _newSnapshots.end())
-    {
-        snapshot->pParentSnapshot = i->second;
-    }
+    snapshot->_pParentSnapshot = _lastSnapshot;
 
-    snapshot->z80MemStuff = SubSnapshot<SnapshotZ80Mem>(nullptr);
+    snapshot->_z80MemStuff = std::make_shared<Blob>(sizeof(SnapshotZ80Mem));
 
-    SnapshotZ80Mem& s = *(snapshot->z80MemStuff.Full());
+    SnapshotZ80Mem& s = *((SnapshotZ80Mem*)snapshot->_z80MemStuff->Data());
 
     s.AF = AF;
     s.BC = BC;
@@ -1934,39 +1633,34 @@ int Core::CreateSnapshot(int parentId)
     snapshot->_scrHeight = _scrHeight;
     snapshot->_scrWidth = _scrWidth;
     snapshot->_scrPitch = _scrPitch;
-    snapshot->_screen.resize(_scrHeight * _scrPitch);
+    snapshot->_screenBlob = std::make_shared<Blob>(_scrHeight * _scrPitch);
 
-    memcpy(snapshot->_screen.data(), _pScreen, snapshot->_screen.size());
-
-    snapshot->parentSnapshotId = _lastSnapshotId;
+    memcpy(snapshot->_screenBlob->Data(), _pScreen, snapshot->_screenBlob->Size());
 
     int id = _nextNewSnapshotId;
     _nextNewSnapshotId++;
 
     _newSnapshots[id] = snapshot;
 
+    if (_lastSnapshot != nullptr)
+    {
+        _lastSnapshot->_pParentSnapshot = snapshot;
+
+        // Calculate diffs just for the fun of it...
+        _lastSnapshot->_z80MemStuff->SetDiffParent(snapshot->_z80MemStuff); //->SwitchToDiff(snapshot->z80MemStuff);
+
+        // Uncommenting this next line causes weird crashes when reverse mode is activated.
+        _lastSnapshot->_screenBlob->SetDiffParent(snapshot->_screenBlob);
+    }
+
+    _lastSnapshot = snapshot;
+
     return id;
 }
 
 void Core::DeleteSnapshot(int id)
 {
-    std::map<int, std::shared_ptr<CoreSnapshot>>::iterator i = _newSnapshots.find(id);
-    if (i != _newSnapshots.end())
-    {
-        std::shared_ptr<CoreSnapshot> snapshot = i->second;
-
-        // Would it make sense to use weak_ptr for the parent snapshot pointer?
-        // Check if any snapshots are pointing to this snapshot.
-        for (std::pair<int, std::shared_ptr<CoreSnapshot>> s : _newSnapshots)
-        {
-            if (s.second->pParentSnapshot == snapshot)
-            {
-                s.second->pParentSnapshot = nullptr;
-            }
-        }
-
-        _newSnapshots.erase(id);
-    }
+    _newSnapshots.erase(id);
 }
 
 bool Core::RevertToSnapshot(int id)
@@ -1978,7 +1672,7 @@ bool Core::RevertToSnapshot(int id)
 
     CoreSnapshot& snapshot = *(_newSnapshots[id].get());
     // Do the Z80 and mem and other stuff...
-    SnapshotZ80Mem& s = *(snapshot.z80MemStuff.Full());
+    SnapshotZ80Mem& s = *((SnapshotZ80Mem*)snapshot._z80MemStuff->Data());
 
     AF = s.AF;
     BC = s.BC;
@@ -2023,7 +1717,7 @@ bool Core::RevertToSnapshot(int id)
     _scrPitch = snapshot._scrPitch;
     _scrWidth = snapshot._scrWidth;
 
-    memcpy(_pScreen, snapshot._screen.data(), snapshot._screen.size());
+    memcpy(_pScreen, snapshot._screenBlob->Data(), snapshot._screenBlob->Size());
 
     return true;
 }

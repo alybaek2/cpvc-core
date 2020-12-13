@@ -13,7 +13,8 @@
 #include "Bus.h"
 #include "IBus.h"
 
-#include "CoreSnapshot.h"
+struct CoreSnapshot;
+#include "Encode.h"
 
 // Z80 flags
 constexpr byte flagS = 0x80;     // Sign flag
@@ -40,13 +41,11 @@ public:
     std::map<int, std::unique_ptr<CoreSnapshot>> _snapshots;
     int _lastSnapshotId;
 
-    void SaveSnapshot(int id);
-    bool LoadSnapshot(int id);
-
     std::map<int, std::shared_ptr<CoreSnapshot>> _newSnapshots;
     int _nextNewSnapshotId;
+    std::shared_ptr<CoreSnapshot> _lastSnapshot;
 
-    int CreateSnapshot(int parentId);
+    int CreateSnapshot();
     void DeleteSnapshot(int id);
     bool RevertToSnapshot(int id);
 

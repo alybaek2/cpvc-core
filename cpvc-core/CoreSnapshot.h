@@ -2,6 +2,7 @@
 #pragma once
 
 #include "common.h"
+#include "Blob.h"
 
 #include "Memory.h"
 #include "PPI.h"
@@ -120,50 +121,21 @@ struct Snapshot2nd64kAndRoms
 {
     bool _allZeroes;
     bytevector _banks[4];
-    //Mem16k _banks[4];
     int _lowerRomId;
     std::map<byte, int> _upperRomIds;
 };
 
-template <typename S>
-class SubSnapshot
-{
-public:
-    SubSnapshot(std::shared_ptr<S> parent = nullptr)
-    {
-        _full = std::make_shared<S>();
-        _diffParent = parent;
-    };
-
-    ~SubSnapshot() {};
-
-    std::shared_ptr<S> Full()
-    {
-        return _full;
-    }
-
-private:
-    std::shared_ptr<S> _full;
-
-    bytevector _diff;
-    std::shared_ptr<S> _diffParent;
-};
-
-// Optimzed core storage.
+// Optimized core storage.
 struct CoreSnapshot
 {
 public:
-    int parentSnapshotId;  // -1 if no parent.
-
-    std::shared_ptr<CoreSnapshot> pParentSnapshot;
+    std::shared_ptr<CoreSnapshot> _pParentSnapshot;
 
     // Serializable stuff that can be stored as a full image or a compressed diff.
-    SubSnapshot<SnapshotZ80Mem> z80MemStuff;
-    SubSnapshot<Snapshot2nd64kAndRoms> mem2nd64kStuff;
+    std::shared_ptr<Blob> _z80MemStuff;
+    std::shared_ptr<Blob> _screenBlob;
 
     // Stuff that is not yet serializable...
-
-    bytevector z80MemDiff;
     
     Snapshot2nd64kAndRoms mem2nd64k;
 
@@ -186,6 +158,5 @@ public:
     word _scrHeight;
     word _scrWidth;
     word _scrPitch;
-    bytevector _screen;
 };
 
