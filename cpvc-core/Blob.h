@@ -72,6 +72,7 @@ public:
         RunLengthEncode(diffBytes.data(), _bytes.size(), _encodedDiffBytes);
         _parentBlob = parentBlob;
         _bytes.clear();
+        bytevector().swap(_bytes);
     }
 
     byte* Data()
