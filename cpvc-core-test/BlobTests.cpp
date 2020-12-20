@@ -1,34 +1,45 @@
 #include "gtest/gtest.h"
 #include "../cpvc-core/Blob.h"
 
+std::shared_ptr<Blob<byte>> NewBlob(const bytevector& bytes)
+{
+    std::shared_ptr<Blob<byte>> pBlob = std::make_shared<Blob<byte>>(bytes.size());
+
+    memcpy_s(pBlob->Data(), pBlob->Size(), bytes.data(), bytes.size());
+
+    return pBlob;
+}
+
 TEST(BlobTests, Data)
 {
     // Setup
     bytevector bytes = { 0x42, 0x99, 0x12, 0x06 };
 
     // Act
-    Blob blob = Blob(bytes.data(), bytes.size());
+    std::shared_ptr<Blob<byte>> pBlob = NewBlob(bytes);
+    //Blob<bytevector> blob = Blob<bytevector>(bytes.data(), bytes.size());
 
     // Verify
-    ASSERT_EQ(bytes.size(), blob.Size());
-    ASSERT_NE(nullptr, blob.Data());
-    ASSERT_EQ(0, memcmp(bytes.data(), blob.Data(), blob.Size()));
+    ASSERT_EQ(bytes.size(), pBlob->Size());
+    ASSERT_NE(nullptr, pBlob->Data());
+    ASSERT_EQ(0, memcmp(bytes.data(), pBlob->Data(), pBlob->Size()));
 }
 
 TEST(BlobTests, DataWithParentSameBytes)
 {
     // Setup
     bytevector bytes = { 0x42, 0x99, 0x12, 0x06 };
-    std::shared_ptr<Blob> parentBlob = std::make_shared<Blob>(bytes.data(), bytes.size());
+    std::shared_ptr<Blob<byte>> parentBlob = NewBlob(bytes);
+    //std::shared_ptr<Blob<byte>> parentBlob = std::make_shared<Blob<byte>>(bytes.data(), bytes.size());
 
     // Act
-    Blob blob = Blob(bytes.data(), bytes.size());
-    blob.SetDiffParent(parentBlob);
+    std::shared_ptr<Blob<byte>> pBlob = NewBlob(bytes);
+    pBlob->SetDiffParent(parentBlob);
 
     // Verify
-    ASSERT_EQ(bytes.size(), blob.Size());
-    ASSERT_NE(nullptr, blob.Data());
-    ASSERT_EQ(0, memcmp(bytes.data(), blob.Data(), blob.Size()));
+    ASSERT_EQ(bytes.size(), pBlob->Size());
+    ASSERT_NE(nullptr, pBlob->Data());
+    ASSERT_EQ(0, memcmp(bytes.data(), pBlob->Data(), pBlob->Size()));
 }
 
 TEST(BlobTests, DataWithParentFewerBytes)
@@ -36,16 +47,17 @@ TEST(BlobTests, DataWithParentFewerBytes)
     // Setup
     bytevector bytes = { 0x42, 0x99, 0x12, 0x06 };
     bytevector parentBytes = { 0x99, 0x12, 0x06 };
-    std::shared_ptr<Blob> parentBlob = std::make_shared<Blob>(parentBytes.data(), parentBytes.size());
+    //std::shared_ptr<Blob<bytevector>> parentBlob = std::make_shared<Blob<bytevector>>(parentBytes.data(), parentBytes.size());
+    std::shared_ptr<Blob<byte>> parentBlob = NewBlob(parentBytes);
 
     // Act
-    Blob blob = Blob(bytes.data(), bytes.size());
-    blob.SetDiffParent(parentBlob);
+    std::shared_ptr<Blob<byte>> pBlob = NewBlob(bytes);
+    pBlob->SetDiffParent(parentBlob);
 
     // Verify
-    ASSERT_EQ(bytes.size(), blob.Size());
-    ASSERT_NE(nullptr, blob.Data());
-    ASSERT_EQ(0, memcmp(bytes.data(), blob.Data(), blob.Size()));
+    ASSERT_EQ(bytes.size(), pBlob->Size());
+    ASSERT_NE(nullptr, pBlob->Data());
+    ASSERT_EQ(0, memcmp(bytes.data(), pBlob->Data(), pBlob->Size()));
 }
 
 TEST(BlobTests, DataWithParentMoreBytes)
@@ -53,16 +65,17 @@ TEST(BlobTests, DataWithParentMoreBytes)
     // Setup
     bytevector bytes = { 0x42, 0x99, 0x12, 0x06 };
     bytevector parentBytes = { 0x01, 0x42, 0x99, 0x12, 0x06 };
-    std::shared_ptr<Blob> parentBlob = std::make_shared<Blob>(parentBytes.data(), parentBytes.size());
+    //std::shared_ptr<Blob<bytevector>> parentBlob = std::make_shared<Blob<bytevector>>(parentBytes.data(), parentBytes.size());
+    std::shared_ptr<Blob<byte>> parentBlob = NewBlob(parentBytes);
 
     // Act
-    Blob blob = Blob(bytes.data(), bytes.size());
-    blob.SetDiffParent(parentBlob);
+    std::shared_ptr<Blob<byte>> pBlob = NewBlob(bytes);
+    pBlob->SetDiffParent(parentBlob);
 
     // Verify
-    ASSERT_EQ(bytes.size(), blob.Size());
-    ASSERT_NE(nullptr, blob.Data());
-    ASSERT_EQ(0, memcmp(bytes.data(), blob.Data(), blob.Size()));
+    ASSERT_EQ(bytes.size(), pBlob->Size());
+    ASSERT_NE(nullptr, pBlob->Data());
+    ASSERT_EQ(0, memcmp(bytes.data(), pBlob->Data(), pBlob->Size()));
 }
 
 TEST(BlobTests, DataWithParentNoBytes)
@@ -70,16 +83,17 @@ TEST(BlobTests, DataWithParentNoBytes)
     // Setup
     bytevector bytes = { 0x42, 0x99, 0x12, 0x06 };
     bytevector parentBytes = { };
-    std::shared_ptr<Blob> parentBlob = std::make_shared<Blob>(parentBytes.data(), parentBytes.size());
+    //std::shared_ptr<Blob<bytevector>> parentBlob = std::make_shared<Blob<bytevector>>(parentBytes.data(), parentBytes.size());
+    std::shared_ptr<Blob<byte>> parentBlob = NewBlob(parentBytes);
 
     // Act
-    Blob blob = Blob(bytes.data(), bytes.size());
-    blob.SetDiffParent(parentBlob);
+    std::shared_ptr<Blob<byte>> pBlob = NewBlob(bytes);
+    pBlob->SetDiffParent(parentBlob);
 
     // Verify
-    ASSERT_EQ(bytes.size(), blob.Size());
-    ASSERT_NE(nullptr, blob.Data());
-    ASSERT_EQ(0, memcmp(bytes.data(), blob.Data(), blob.Size()));
+    ASSERT_EQ(bytes.size(), pBlob->Size());
+    ASSERT_NE(nullptr, pBlob->Data());
+    ASSERT_EQ(0, memcmp(bytes.data(), pBlob->Data(), pBlob->Size()));
 }
 
 TEST(BlobTests, NoData)
@@ -88,21 +102,21 @@ TEST(BlobTests, NoData)
     bytevector bytes = { };
 
     // Act
-    Blob blob = Blob(bytes.data(), bytes.size());
+    std::shared_ptr<Blob<byte>> pBlob = NewBlob(bytes);
 
     // Verify
-    ASSERT_EQ(0, blob.Size());
+    ASSERT_EQ(0, pBlob->Size());
 }
 
-TEST(BlobTests, NullData)
-{
-    // Setup
-    bytevector bytes = { };
-
-    // Act
-    Blob blob = Blob(nullptr, 0);
-
-    // Verify
-    ASSERT_EQ(0, blob.Size());
-}
+//TEST(BlobTests, NullData)
+//{
+//    // Setup
+//    bytevector bytes = { };
+//
+//    // Act
+//    Blob<bytevector> blob = Blob<bytevector>(nullptr, 0);
+//
+//    // Verify
+//    ASSERT_EQ(0, blob.Size());
+//}
 

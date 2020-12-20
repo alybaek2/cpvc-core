@@ -19,7 +19,6 @@ public:
         _manufacturer = ppi._manufacturer;
 
         _tapeWriteData = ppi._tapeWriteData;
-        _tapeMotor = ppi._tapeMotor;
 
         _portA = ppi._portA;
         _portB = ppi._portB;

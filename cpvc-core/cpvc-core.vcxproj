@@ -143,7 +143,6 @@
     <ClInclude Include="Track.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Blob.cpp" />
     <ClCompile Include="Bus.cpp" />
     <ClCompile Include="Core.cpp">
       <AssemblerOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">All</AssemblerOutput>
