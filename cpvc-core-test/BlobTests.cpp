@@ -17,7 +17,6 @@ TEST(BlobTests, Data)
 
     // Act
     std::shared_ptr<Blob<byte>> pBlob = NewBlob(bytes);
-    //Blob<bytevector> blob = Blob<bytevector>(bytes.data(), bytes.size());
 
     // Verify
     ASSERT_EQ(bytes.size(), pBlob->Size());
@@ -30,7 +29,6 @@ TEST(BlobTests, DataWithParentSameBytes)
     // Setup
     bytevector bytes = { 0x42, 0x99, 0x12, 0x06 };
     std::shared_ptr<Blob<byte>> parentBlob = NewBlob(bytes);
-    //std::shared_ptr<Blob<byte>> parentBlob = std::make_shared<Blob<byte>>(bytes.data(), bytes.size());
 
     // Act
     std::shared_ptr<Blob<byte>> pBlob = NewBlob(bytes);
@@ -47,7 +45,6 @@ TEST(BlobTests, DataWithParentFewerBytes)
     // Setup
     bytevector bytes = { 0x42, 0x99, 0x12, 0x06 };
     bytevector parentBytes = { 0x99, 0x12, 0x06 };
-    //std::shared_ptr<Blob<bytevector>> parentBlob = std::make_shared<Blob<bytevector>>(parentBytes.data(), parentBytes.size());
     std::shared_ptr<Blob<byte>> parentBlob = NewBlob(parentBytes);
 
     // Act
@@ -65,7 +62,6 @@ TEST(BlobTests, DataWithParentMoreBytes)
     // Setup
     bytevector bytes = { 0x42, 0x99, 0x12, 0x06 };
     bytevector parentBytes = { 0x01, 0x42, 0x99, 0x12, 0x06 };
-    //std::shared_ptr<Blob<bytevector>> parentBlob = std::make_shared<Blob<bytevector>>(parentBytes.data(), parentBytes.size());
     std::shared_ptr<Blob<byte>> parentBlob = NewBlob(parentBytes);
 
     // Act
@@ -83,7 +79,6 @@ TEST(BlobTests, DataWithParentNoBytes)
     // Setup
     bytevector bytes = { 0x42, 0x99, 0x12, 0x06 };
     bytevector parentBytes = { };
-    //std::shared_ptr<Blob<bytevector>> parentBlob = std::make_shared<Blob<bytevector>>(parentBytes.data(), parentBytes.size());
     std::shared_ptr<Blob<byte>> parentBlob = NewBlob(parentBytes);
 
     // Act

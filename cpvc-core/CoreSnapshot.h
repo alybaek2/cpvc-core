@@ -53,20 +53,7 @@ public:
 
     // First 64k of memory.
     Mem16k _banks[4];
-};
 
-struct Snapshot2nd64kAndRoms
-{
-public:
-    bool _allZeroes;
-    bytevector _banks[4];
-    int _lowerRomId;
-    std::map<byte, int> _upperRomIds;
-};
-
-struct SnapshotSimpleHardware
-{
-public:
     Keyboard _keyboard;
     CRTC _crtc;
     PSG _psg;
@@ -85,14 +72,39 @@ public:
     word _scrPitch;
 };
 
+struct Snapshot2nd64kAndRoms
+{
+public:
+    bool _allZeroes;
+    bytevector _banks[4];
+    int _lowerRomId;
+    std::map<byte, int> _upperRomIds;
+};
+
 // Optimized core storage.
 struct CoreSnapshot
 {
 public:
+    std::shared_ptr<CoreSnapshot> SetDiffParent(std::shared_ptr<CoreSnapshot>& parentSnapshot)
+    {
+        size_t screenBufferSize = _screenBlob->Size();
+
+        std::unique_ptr<bytevector> tempSnapshotZ80MemByteVector;
+        std::unique_ptr<bytevector> tempSnapshotScreenByteVector;
+
+        tempSnapshotZ80MemByteVector = _z80MemStuff->SetDiffParent(parentSnapshot->_z80MemStuff);
+        tempSnapshotScreenByteVector = _screenBlob->SetDiffParent(parentSnapshot->_screenBlob);
+
+        std::unique_ptr<CoreSnapshot> nextSnapshot = std::make_unique<CoreSnapshot>();
+        nextSnapshot->_z80MemStuff = std::make_shared<Blob<SnapshotZ80Mem>>(1, tempSnapshotZ80MemByteVector);
+        nextSnapshot->_screenBlob = std::make_shared<Blob<byte>>(screenBufferSize, tempSnapshotScreenByteVector);
+
+        return std::move(nextSnapshot);
+    }
+
     // Serializable stuff that can be stored as a full image or a compressed diff.
     std::shared_ptr<Blob<SnapshotZ80Mem>> _z80MemStuff;
     std::shared_ptr<Blob<byte>> _screenBlob;
-    std::shared_ptr<Blob<SnapshotSimpleHardware>> _simpleHardware;
 
     // Stuff that is not yet serializable...
     Snapshot2nd64kAndRoms mem2nd64k;

@@ -21,15 +21,15 @@ public:
     /// Constructor that stores the specified number of instances of <c>T</c>.
     /// </summary>
     /// <param name="size">The number of instances of <c>T</c> to store.</param>
-    Blob(size_t count = 1)
+    Blob(size_t count)
     {
-        size_t size = sizeof(T) * count;
-        _bytes.resize(size);
+        std::unique_ptr<bytevector> pBytes(nullptr);
+        Init(count, pBytes);
+    }
 
-        if (count > 0)
-        {
-            memset(_bytes.data(), 0, size);
-        }
+    Blob(size_t count, std::unique_ptr<bytevector>& pBytes)
+    {
+        Init(count, pBytes);
     }
 
     ~Blob()
@@ -50,11 +50,12 @@ public:
     /// the other object and (hopefully) save space.
     /// </summary>
     /// <param name="parentBlob">Smart pointer to the other object with a similar serialization.</param>
-    void SetDiffParent(std::shared_ptr<Blob<T>>& parentBlob)
+    /// <returns>A std::unique_ptr<bytevector> of the storage that was being used to store the full, uncompressed object.</returns>
+    std::unique_ptr<bytevector> SetDiffParent(std::shared_ptr<Blob<T>>& parentBlob)
     {
         PopulateBytes();
 
-        bytevector diffBytes = _bytes;
+        bytevector diffBytes = *_pBytes;
         size_t parentSize = parentBlob->Size();
         byte* pParentData = parentBlob->Data();
 
@@ -64,39 +65,66 @@ public:
             size = parentSize;
         }
 
+        byte* pDiffBytes = &diffBytes[0];
+        byte* pParentBytes = &pParentData[0];
         for (size_t i = 0; i < size; i++)
         {
-            diffBytes[i] ^= pParentData[i];
+            *pDiffBytes ^= *pParentBytes;
+
+            pDiffBytes++;
+            pParentBytes++;
         }
 
-        RunLengthEncode(diffBytes.data(), _bytes.size(), _encodedDiffBytes);
+        _pEncodedDiffBytes = std::make_unique<bytevector>();
+        RunLengthEncode(diffBytes.data(), _pBytes->size(), *_pEncodedDiffBytes);
         _parentBlob = parentBlob;
-        _bytes.clear();
-        bytevector().swap(_bytes);
+        _pBytes->clear();
+
+        return std::move(_pBytes);
     }
 
     byte* Data()
     {
         PopulateBytes();
 
-        return _bytes.data();
+        return _pBytes->data();
     }
 
     size_t Size()
     {
         PopulateBytes();
 
-        return _bytes.size();
+        return _pBytes->size();
     }
 
 private:
+    void Init(size_t count, std::unique_ptr<bytevector>& pBytes)
+    {
+        size_t size = sizeof(T) * count;
+
+        if (pBytes == nullptr)
+        {
+            _pBytes = std::make_unique<bytevector>(size);
+        }
+        else
+        {
+            _pBytes = std::move(pBytes);
+            _pBytes->resize(size);
+        }
+
+        if (size > 0)
+        {
+            memset(_pBytes->data(), 0, size);
+        }
+    }
+
     void PopulateBytes()
     {
         if (_parentBlob != nullptr)
         {
             // We're a diff... switch back to a full image.
             bytevector diffBytes;
-            RunLengthDecode(_encodedDiffBytes, diffBytes);
+            RunLengthDecode(*_pEncodedDiffBytes, diffBytes);
 
             size_t parentSize = _parentBlob->Size();
             byte* pParentData = _parentBlob->Data();
@@ -112,16 +140,16 @@ private:
                 diffBytes[i] ^= pParentData[i];
             }
 
-            _bytes = diffBytes;
+            _pBytes = std::make_unique<bytevector>(diffBytes);
             _parentBlob = nullptr;
-            _encodedDiffBytes.clear();
+            _pEncodedDiffBytes->clear();
         }
     }
 
     // When not storing as a diff.
-    bytevector _bytes;
+    std::unique_ptr<bytevector> _pBytes;
 
     // Members for when storing as a diff between this object and another.
     std::shared_ptr<Blob<T>> _parentBlob;
-    bytevector _encodedDiffBytes;
+    std::unique_ptr<bytevector> _pEncodedDiffBytes;
 };

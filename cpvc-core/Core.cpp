@@ -1581,11 +1581,14 @@ StreamReader& operator>>(StreamReader& s, Core& core)
 
 int Core::CreateSnapshot()
 {
-    std::shared_ptr<CoreSnapshot> snapshot = std::make_shared<CoreSnapshot>();
+    if (_currentSnapshot == nullptr)
+    {
+        _currentSnapshot = std::make_shared<CoreSnapshot>();
+        _currentSnapshot->_z80MemStuff = std::make_shared<Blob<SnapshotZ80Mem>>(1);
+        _currentSnapshot->_screenBlob = std::make_shared<Blob<byte>>((size_t)(_scrHeight * _scrPitch));
+    }
 
-    snapshot->_z80MemStuff = std::make_shared<Blob<SnapshotZ80Mem>>();
-
-    SnapshotZ80Mem& s = *snapshot->_z80MemStuff;
+    SnapshotZ80Mem& s = *_currentSnapshot->_z80MemStuff;
 
     s.AF = AF;
     s.BC = BC;
@@ -1607,55 +1610,46 @@ int Core::CreateSnapshot()
     s._eiDelay = _eiDelay;
     s._halted = _halted;
 
+    s._keyboard.CopyFrom(_keyboard);
+    s._crtc.CopyFrom(_crtc);
+    s._psg.CopyFrom(_psg);
+    s._ppi.CopyFrom(_ppi);
+    s._gateArray.CopyFrom(_gateArray);
+
+    s._ticks = _ticks;
+    s._frequency = _frequency;
+    s._audioTickTotal = _audioTickTotal;
+    s._audioTicksToNextSample = _audioTicksToNextSample;
+    s._audioSampleCount = _audioSampleCount;
+
+    s._scrHeight = _scrHeight;
+    s._scrWidth = _scrWidth;
+    s._scrPitch = _scrPitch;
+
+
     _memory.SaveTo(s);
-    _memory.SaveTo(snapshot->mem2nd64k);
+    _memory.SaveTo(_currentSnapshot->mem2nd64k);
 
-    // Memory
-    snapshot->_simpleHardware = std::make_shared<Blob<SnapshotSimpleHardware>>();
-
-    SnapshotSimpleHardware& simple = *snapshot->_simpleHardware;
-
-    simple._keyboard.CopyFrom(_keyboard);
-    simple._crtc.CopyFrom(_crtc);
-    simple._psg.CopyFrom(_psg);
-    simple._ppi.CopyFrom(_ppi);
-    simple._gateArray.CopyFrom(_gateArray);
-
-    simple._ticks = _ticks;
-    simple._frequency = _frequency;
-    simple._audioTickTotal = _audioTickTotal;
-    simple._audioTicksToNextSample = _audioTicksToNextSample;
-    simple._audioSampleCount = _audioSampleCount;
-
-    simple._scrHeight = _scrHeight;
-    simple._scrWidth = _scrWidth;
-    simple._scrPitch = _scrPitch;
-
-    snapshot->_fdc.CopyFrom(_fdc);
-    snapshot->_tape.CopyFrom(_tape);
+    _currentSnapshot->_fdc.CopyFrom(_fdc);
+    _currentSnapshot->_tape.CopyFrom(_tape);
 
     // Screen
-    snapshot->_screenBlob = std::make_shared<Blob<byte>>((size_t)(_scrHeight * _scrPitch));
 
-    memcpy(snapshot->_screenBlob->Data(), _pScreen, snapshot->_screenBlob->Size());
+    memcpy(_currentSnapshot->_screenBlob->Data(), _pScreen, _currentSnapshot->_screenBlob->Size());
 
     int id = _nextNewSnapshotId;
     _nextNewSnapshotId++;
 
-    _newSnapshots[id] = snapshot;
+    _newSnapshots[id] = _currentSnapshot;
 
+    std::shared_ptr<CoreSnapshot> nextSnaphot;
     if (_lastSnapshot != nullptr)
     {
-        // Calculate diffs just for the fun of it...
-        _lastSnapshot->_z80MemStuff->SetDiffParent(snapshot->_z80MemStuff);
-
-        // Uncommenting this next line causes weird crashes when reverse mode is activated.
-        _lastSnapshot->_screenBlob->SetDiffParent(snapshot->_screenBlob);
-
-        _lastSnapshot->_simpleHardware->SetDiffParent(snapshot->_simpleHardware);
+        nextSnaphot = _lastSnapshot->SetDiffParent(_currentSnapshot);
     }
 
-    _lastSnapshot = snapshot;
+    _lastSnapshot = _currentSnapshot;
+    _currentSnapshot = nextSnaphot;
 
     return id;
 }
@@ -1699,22 +1693,21 @@ bool Core::RevertToSnapshot(int id)
     _memory.LoadFrom(s);
     _memory.LoadFrom(snapshot.mem2nd64k);
 
-    SnapshotSimpleHardware& simple = *((SnapshotSimpleHardware*)snapshot._simpleHardware->Data());
-    _keyboard.CopyFrom(simple._keyboard);
-    _crtc.CopyFrom(simple._crtc);
-    _psg.CopyFrom(simple._psg);
-    _ppi.CopyFrom(simple._ppi);
-    _gateArray.CopyFrom(simple._gateArray);
+    _keyboard.CopyFrom(s._keyboard);
+    _crtc.CopyFrom(s._crtc);
+    _psg.CopyFrom(s._psg);
+    _ppi.CopyFrom(s._ppi);
+    _gateArray.CopyFrom(s._gateArray);
 
-    _ticks = simple._ticks;
-    _frequency = simple._frequency;
-    _audioTickTotal = simple._audioTickTotal;
-    _audioTicksToNextSample = simple._audioTicksToNextSample;
-    _audioSampleCount = simple._audioSampleCount;
+    _ticks = s._ticks;
+    _frequency = s._frequency;
+    _audioTickTotal = s._audioTickTotal;
+    _audioTicksToNextSample = s._audioTicksToNextSample;
+    _audioSampleCount = s._audioSampleCount;
 
-    _scrHeight = simple._scrHeight;
-    _scrWidth = simple._scrWidth;
-    _scrPitch = simple._scrPitch;
+    _scrHeight = s._scrHeight;
+    _scrWidth = s._scrWidth;
+    _scrPitch = s._scrPitch;
 
     memcpy(_pScreen, snapshot._screenBlob->Data(), snapshot._screenBlob->Size());
 
