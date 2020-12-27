@@ -89,11 +89,8 @@ public:
     {
         size_t screenBufferSize = _screenBlob->Size();
 
-        std::unique_ptr<bytevector> tempSnapshotZ80MemByteVector;
-        std::unique_ptr<bytevector> tempSnapshotScreenByteVector;
-
-        tempSnapshotZ80MemByteVector = _z80MemStuff->SetDiffParent(parentSnapshot->_z80MemStuff);
-        tempSnapshotScreenByteVector = _screenBlob->SetDiffParent(parentSnapshot->_screenBlob);
+        std::unique_ptr<bytevector> tempSnapshotZ80MemByteVector = _z80MemStuff->SetDiffParent(parentSnapshot->_z80MemStuff);
+        std::unique_ptr<bytevector> tempSnapshotScreenByteVector = _screenBlob->SetDiffParent(parentSnapshot->_screenBlob);
 
         std::unique_ptr<CoreSnapshot> nextSnapshot = std::make_unique<CoreSnapshot>();
         nextSnapshot->_z80MemStuff = std::make_shared<Blob<SnapshotZ80Mem>>(1, tempSnapshotZ80MemByteVector);

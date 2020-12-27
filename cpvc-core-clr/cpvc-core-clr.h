@@ -27,9 +27,9 @@ namespace CPvC {
             _pCore = nullptr;
         }
 
-        int CreateSnapshot()
+        bool CreateSnapshot(int id)
         {
-            return _pCore->CreateSnapshot();
+            return _pCore->CreateSnapshot(id);
         }
 
         void DeleteSnapshot(int id)

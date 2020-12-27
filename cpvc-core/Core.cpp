@@ -59,7 +59,6 @@ void Core::Init()
     _lastSnapshotId = -1;
     _snapshots.clear();
 
-    _nextNewSnapshotId = 0;
     _newSnapshots.clear();
     _lastSnapshot = nullptr;
 }
@@ -1579,7 +1578,7 @@ StreamReader& operator>>(StreamReader& s, Core& core)
     return s;
 }
 
-int Core::CreateSnapshot()
+bool Core::CreateSnapshot(int id)
 {
     if (_currentSnapshot == nullptr)
     {
@@ -1634,11 +1633,7 @@ int Core::CreateSnapshot()
     _currentSnapshot->_tape.CopyFrom(_tape);
 
     // Screen
-
     memcpy(_currentSnapshot->_screenBlob->Data(), _pScreen, _currentSnapshot->_screenBlob->Size());
-
-    int id = _nextNewSnapshotId;
-    _nextNewSnapshotId++;
 
     _newSnapshots[id] = _currentSnapshot;
 
@@ -1651,7 +1646,7 @@ int Core::CreateSnapshot()
     _lastSnapshot = _currentSnapshot;
     _currentSnapshot = nextSnaphot;
 
-    return id;
+    return true;
 }
 
 void Core::DeleteSnapshot(int id)

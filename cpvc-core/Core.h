@@ -42,11 +42,10 @@ public:
     int _lastSnapshotId;
 
     std::map<int, std::shared_ptr<CoreSnapshot>> _newSnapshots;
-    int _nextNewSnapshotId;
     std::shared_ptr<CoreSnapshot> _lastSnapshot;
     std::shared_ptr<CoreSnapshot> _currentSnapshot;
 
-    int CreateSnapshot();
+    bool CreateSnapshot(int id);
     void DeleteSnapshot(int id);
     bool RevertToSnapshot(int id);
 
