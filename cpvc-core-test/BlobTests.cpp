@@ -3,9 +3,10 @@
 
 std::shared_ptr<Blob<byte>> NewBlob(const bytevector& bytes)
 {
-    std::shared_ptr<Blob<byte>> pBlob = std::make_shared<Blob<byte>>(bytes.size());
+    size_t size = bytes.size();
+    std::shared_ptr<Blob<byte>> pBlob = std::make_shared<Blob<byte>>(size);
 
-    memcpy_s(pBlob->Data(), pBlob->Size(), bytes.data(), bytes.size());
+    memcpy_s(pBlob->Data(), pBlob->Size(), bytes.data(), size);
 
     return pBlob;
 }
@@ -103,15 +104,63 @@ TEST(BlobTests, NoData)
     ASSERT_EQ(0, pBlob->Size());
 }
 
-//TEST(BlobTests, NullData)
-//{
-//    // Setup
-//    bytevector bytes = { };
-//
-//    // Act
-//    Blob<bytevector> blob = Blob<bytevector>(nullptr, 0);
-//
-//    // Verify
-//    ASSERT_EQ(0, blob.Size());
-//}
+TEST(BlobTests, MultipleObjects)
+{
+    // Act
+    std::shared_ptr<Blob<__int64>> pBlob = std::make_shared<Blob<__int64>>(2);
+
+    // Verify
+    ASSERT_EQ(2 * sizeof(__int64), pBlob->Size());
+}
+
+TEST(BlobTests, MultipleObjectsWithEmptyStorage)
+{
+    // Setup
+    std::unique_ptr<bytevector> pBytes = std::make_unique<bytevector>();
+    pBytes->resize(1);
+
+    // Act
+    std::shared_ptr<Blob<__int64>> pBlob = std::make_shared<Blob<__int64>>(2, pBytes);
+
+    // Verify
+    ASSERT_EQ(2 * sizeof(__int64), pBlob->Size());
+}
+
+TEST(BlobTests, MultipleObjectsWithStorage)
+{
+    // Setup
+    std::unique_ptr<bytevector> pBytes = std::make_unique<bytevector>();
+    pBytes->resize(8);
+
+    // Act
+    std::shared_ptr<Blob<__int64>> pBlob = std::make_shared<Blob<__int64>>(2, pBytes);
+
+    // Verify
+    ASSERT_EQ(2 * sizeof(__int64), pBlob->Size());
+}
+
+TEST(BlobTests, MultipleObjectsWithExcessiveStorage)
+{
+    // Setup
+    std::unique_ptr<bytevector> pBytes = std::make_unique<bytevector>();
+    pBytes->resize(9);
+
+    // Act
+    std::shared_ptr<Blob<__int64>> pBlob = std::make_shared<Blob<__int64>>(2, pBytes);
+
+    // Verify
+    ASSERT_EQ(2 * sizeof(__int64), pBlob->Size());
+}
+
+TEST(BlobTests, ReferenceOperator)
+{
+    // Setup
+    std::shared_ptr<Blob<__int64>> pBlob = std::make_shared<Blob<__int64>>(1);
+
+    // Act
+    __int64& i = *pBlob;
+
+    // Verify
+    ASSERT_EQ((byte*)&i, pBlob->Data());
+}
 

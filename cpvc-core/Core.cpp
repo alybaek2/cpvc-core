@@ -1662,8 +1662,9 @@ bool Core::RevertToSnapshot(int id)
     }
 
     CoreSnapshot& snapshot = *(_newSnapshots[id].get());
+
     // Do the Z80 and mem and other stuff...
-    SnapshotZ80Mem& s = *((SnapshotZ80Mem*)snapshot._z80MemStuff->Data());
+    SnapshotZ80Mem& s = *snapshot._z80MemStuff;
 
     AF = s.AF;
     BC = s.BC;
