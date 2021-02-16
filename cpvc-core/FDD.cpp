@@ -15,6 +15,8 @@ void FDD::Init()
     _currentTrack = 0;
 
     _hasDisk = false;
+    _tempDiskLoaded = false;
+    _diskImage = bytevector();
 }
 
 void FDD::Eject()
@@ -22,13 +24,27 @@ void FDD::Eject()
     Init();
 }
 
-bool FDD::Load(Disk& d)
+bool FDD::Load(Disk& d, const bytevector& image)
 {
     _hasDisk = true;
-    _disk = d;
+
+    _diskImage = image;
+    _tempDiskLoaded = false;
 
     return true;
 }
+
+Disk& FDD::GetDisk()
+{
+    if (!_tempDiskLoaded)
+    {
+        _tempDisk.LoadDisk(_diskImage.data(), _diskImage.size());
+        _tempDiskLoaded = true;
+    }
+
+    return _tempDisk;
+}
+
 
 // Floppy Drive functions...
 bool FDD::IsReady()
@@ -49,9 +65,9 @@ bool FDD::Seek(const byte cylinder)
         return false;
     }
 
-    for (size_t t = 0; t < _disk._tracks.size(); t++)
+    for (size_t t = 0; t < GetDisk()._tracks.size(); t++)
     {
-        if (_disk._tracks.at(t)._id == cylinder)
+        if (GetDisk()._tracks.at(t)._id == cylinder)
         {
             _currentTrack = t;
             return true;
@@ -81,7 +97,7 @@ bool FDD::ReadId(CHRN& chrn)
 
 Track& FDD::CurrentTrack()
 {
-    for (Track& track : _disk._tracks)
+    for (Track& track : GetDisk()._tracks)
     {
         if (track._id == _currentTrack)
         {
@@ -202,9 +218,9 @@ bool FDD::ReadData(
 
 void FDD::ReadDataResult(byte& cylinder, byte& head, byte& sector, byte& numBytes)
 {
-    for (size_t t = 0; t < _disk._tracks.size(); t++)
+    for (size_t t = 0; t < GetDisk()._tracks.size(); t++)
     {
-        Track& track = _disk._tracks.at(t);
+        Track& track = GetDisk()._tracks.at(t);
         if (track._id == cylinder)
         {
             for (size_t s = 0; s < track._sectors.size(); s++)
@@ -218,7 +234,7 @@ void FDD::ReadDataResult(byte& cylinder, byte& head, byte& sector, byte& numByte
 
             // Get first sector on next cylinder
             cylinder++;
-            Track& track2 = _disk._tracks.at(cylinder);
+            Track& track2 = GetDisk()._tracks.at(cylinder);
             sector = track2._sectors.at(0)._id;
 
             for (size_t s = 0; s < track2._sectors.size(); s++)
@@ -257,7 +273,7 @@ StreamWriter& operator<<(StreamWriter& s, const FDD& fdd)
 
     if (hasDisk)
     {
-        s << fdd._disk;
+        s << fdd._diskImage;
     }
 
     return s;
@@ -271,8 +287,21 @@ StreamReader& operator>>(StreamReader& s, FDD& fdd)
     s >> fdd._hasDisk;
     if (fdd._hasDisk)
     {
-        s >> fdd._disk;
+        s >> fdd._diskImage;
     }
+
+    fdd._tempDiskLoaded = false;
+
+    return s;
+}
+
+std::ostream& operator<<(std::ostream& s, const FDD& fdd)
+{
+    s << "FDD: Current sector: " << (int)fdd._currentSector << std::endl;
+    s << "FDD: Current track: " << (int)fdd._currentTrack << std::endl;
+    s << "FDD: Has disk: " << (int)fdd._hasDisk << std::endl;
+    s << "FDD: Disk image: " << StringifyByteArray(fdd._diskImage) << std::endl;
+    s << "FDD: Temp disk loaded: " << fdd._tempDiskLoaded << std::endl;
 
     return s;
 }

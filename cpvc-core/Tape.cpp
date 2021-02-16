@@ -2,8 +2,7 @@
 
 Tape::Tape()
 {
-    _pBuffer = nullptr;
-    _size = 0;
+    _hasTape = false;
 
     _motor = false;
     _level = false;
@@ -38,8 +37,7 @@ bool Tape::Load(const bytevector& buffer)
 
     _buffer = buffer;
 
-    _pBuffer = _buffer.data();
-    _size = (int) _buffer.size();
+    _hasTape = true;
 
     _playing = true;
 
@@ -67,10 +65,7 @@ void Tape::Rewind()
 
 void Tape::Eject()
 {
-    _pBuffer = nullptr;
     _buffer.resize(0);
-
-    _size = 0;
 }
 
 void Tape::Tick()
@@ -115,13 +110,13 @@ qword Tape::TicksToNextLevelChange()
 
     while (ticks == 0)
     {
-        if (_currentBlockIndex >= _size)
+        if (_currentBlockIndex >= ((int)_buffer.size()))
         {
             // End of the tape!
             return -1;
         }
 
-        byte id = BlockByte(_pBuffer, _currentBlockIndex);
+        byte id = BlockByte(_buffer.data(), _currentBlockIndex);
 
         switch (id)
         {
@@ -159,8 +154,10 @@ qword Tape::TicksToNextLevelChange()
     return ticks;
 }
 
-dword Tape::BlockSize(byte* p)
+dword Tape::BlockSize()
 {
+    byte* p = _buffer.data() + _currentBlockIndex;
+
     dword size = 0;
 
     byte id = BlockByte(p, 0);
@@ -299,7 +296,7 @@ qword Tape::StepSpeedDataBlock(byte* pData)
 
 qword Tape::StepID10()
 {
-    byte* pBlock = _pBuffer + _currentBlockIndex;
+    byte* pBlock = _buffer.data() + _currentBlockIndex;
 
     byte* pData = pBlock + 5;
 
@@ -322,7 +319,7 @@ qword Tape::StepID10()
 
 qword Tape::StepID11()
 {
-    byte* pBlock = _pBuffer + _currentBlockIndex;
+    byte* pBlock = _buffer.data() + _currentBlockIndex;
 
     if (_phase == BlockPhase::Start)
     {
@@ -343,7 +340,7 @@ qword Tape::StepID11()
 
 qword Tape::StepID12()
 {
-    byte* pBlock = _pBuffer + _currentBlockIndex;
+    byte* pBlock = _buffer.data() + _currentBlockIndex;
 
     qword ticks = 0;
 
@@ -375,7 +372,7 @@ qword Tape::StepID12()
 
 qword Tape::StepID13()
 {
-	byte* pBlock = _pBuffer + _currentBlockIndex;
+	byte* pBlock = _buffer.data() + _currentBlockIndex;
 
     qword ticks = 0;
 
@@ -407,7 +404,7 @@ qword Tape::StepID13()
 
 qword Tape::StepID14()
 {
-	byte* pBlock = _pBuffer + _currentBlockIndex;
+	byte* pBlock = _buffer.data() + _currentBlockIndex;
 
     qword ticks = 0;
 
@@ -462,7 +459,7 @@ qword Tape::StepID14()
 
 qword Tape::StepID15()
 {
-	byte* pBlock = _pBuffer + _currentBlockIndex;
+	byte* pBlock = _buffer.data() + _currentBlockIndex;
 
     qword ticks = 0;
 
@@ -535,7 +532,7 @@ qword Tape::StepID15()
 
 qword Tape::StepID20()
 {
-	byte* pBlock = _pBuffer + _currentBlockIndex;
+	byte* pBlock = _buffer.data() + _currentBlockIndex;
 
     word pause = BlockWord(pBlock + 1, 0);
 	if (pause == 0)
@@ -577,7 +574,7 @@ qword Tape::StepID20()
 
 void Tape::EndPhase()
 {
-    _currentBlockIndex += BlockSize(_pBuffer + _currentBlockIndex);
+    _currentBlockIndex += BlockSize();
     _phase = BlockPhase::Start;
 }
 
@@ -611,8 +608,8 @@ StreamWriter& operator<<(StreamWriter& s, const Tape& tape)
     s << tape._tickPos;
     s << tape._ticksToNextLevelChange;
 
-    s << tape._size;
     s << tape._buffer;
+    s << tape._hasTape;
 
     return s;
 }
@@ -647,10 +644,8 @@ StreamReader& operator>>(StreamReader& s, Tape& tape)
     s >> tape._tickPos;
     s >> tape._ticksToNextLevelChange;
 
-    s >> tape._size;
     s >> tape._buffer;
-
-    tape._pBuffer = tape._buffer.data();
+    s >> tape._hasTape;
 
     return s;
 }

@@ -74,26 +74,20 @@ bool RunLengthDecode(const bytevector& encodedBytes, bytevector& decoded)
     int i = 0;
     while (i < encodedBytes.size())
     {
-        if (encodedBytes[i] == 0)
+        byte isRun = encodedBytes[i];
+        dword len = *((dword*)&encodedBytes[i + 1]);
+        i += 5;
+        size_t t = decoded.size();
+        decoded.resize(t + len);
+        if (isRun == 0)
         {
-            dword len = *((dword*)&encodedBytes[i + 1]);
-            i += 5;
+            memcpy_s(decoded.data() + t, len, &encodedBytes[i], len);
 
-            for (int j = 0; j < len; j++)
-            {
-                decoded.push_back(encodedBytes[i]);
-                i++;
-            }
+            i += len;
         }
         else
         {
-            dword len = *((dword*)&encodedBytes[i + 1]);
-            i += 5;
-
-            for (int j = 0; j < len; j++)
-            {
-                decoded.push_back(encodedBytes[i]);
-            }
+            memset(decoded.data() + t, encodedBytes[i], len);
 
             i++;
         }

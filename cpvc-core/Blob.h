@@ -20,16 +20,24 @@ public:
     /// <summary>
     /// Constructor that stores the specified number of instances of <c>T</c>.
     /// </summary>
-    /// <param name="size">The number of instances of <c>T</c> to store.</param>
-    Blob(size_t count)
+    /// <param name="count">The number of instances of <c>T</c> to store.</param>
+    Blob(size_t count = 0)
     {
         std::unique_ptr<bytevector> pBytes(nullptr);
-        Init(count, pBytes);
+        Init(pBytes);
+        SetCount(count);
+    }
+
+    Blob(std::unique_ptr<bytevector>& pBytes)
+    {
+        Init(pBytes);
     }
 
     Blob(size_t count, std::unique_ptr<bytevector>& pBytes)
     {
-        Init(count, pBytes);
+        Init(pBytes);
+        SetCount(count);
+        Clear();
     }
 
     ~Blob()
@@ -65,8 +73,8 @@ public:
             size = parentSize;
         }
 
-        byte* pDiffBytes = &diffBytes[0];
-        byte* pParentBytes = &pParentData[0];
+        byte* pDiffBytes = diffBytes.data();
+        byte* pParentBytes = pParentData;
         for (size_t i = 0; i < size; i++)
         {
             *pDiffBytes ^= *pParentBytes;
@@ -97,24 +105,34 @@ public:
         return _pBytes->size();
     }
 
-private:
-    void Init(size_t count, std::unique_ptr<bytevector>& pBytes)
+    void SetCount(size_t newCount)
     {
-        size_t size = sizeof(T) * count;
+        if (_pBytes != nullptr)
+        {
+            size_t newSize = sizeof(T) * newCount;
+            _pBytes->resize(newSize);
+        }
+    }
+
+private:
+    void Init(std::unique_ptr<bytevector>& pBytes)
+    {
 
         if (pBytes == nullptr)
         {
-            _pBytes = std::make_unique<bytevector>(size);
+            _pBytes = std::make_unique<bytevector>(0);
         }
         else
         {
             _pBytes = std::move(pBytes);
-            _pBytes->resize(size);
         }
+    }
 
-        if (size > 0)
+    void Clear()
+    {
+        if (_pBytes != nullptr && _pBytes->size() > 0)
         {
-            memset(_pBytes->data(), 0, size);
+            memset(_pBytes->data(), 0, _pBytes->size());
         }
     }
 

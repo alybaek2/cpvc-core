@@ -102,7 +102,7 @@ TEST(FDCTests, ReadSector) {
 
     FDC fdc;
     fdc.Init();
-    fdc._drives[0].Load(disk);
+    fdc._drives[0].Load(disk, image);
 
     // Execute read data command.
     for (byte b : readCommand)

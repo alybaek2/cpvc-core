@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.h"
+#include "stringify.h"
 #include "StreamReader.h"
 #include "StreamWriter.h"
 
@@ -35,5 +36,7 @@ private:
 
     friend StreamWriter& operator<<(StreamWriter& s, const Keyboard& keyboard);
     friend StreamReader& operator>>(StreamReader& s, Keyboard& keyboard);
+
+    friend std::ostream& operator<<(std::ostream& s, const Keyboard& keyboard);
 };
 

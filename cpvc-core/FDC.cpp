@@ -1,4 +1,5 @@
 #include "FDC.h"
+#include "CoreSnapshot.h"
 
 FDC::FDC()
 {
@@ -6,6 +7,121 @@ FDC::FDC()
 
 FDC::~FDC()
 {
+}
+
+#define COPY_ARRAY(x, arg) memcpy_s(x.arg, sizeof(x.arg), arg, sizeof(arg))
+#define COPY_MEMBER(x, arg) x.arg = arg
+
+void FDC::SaveTo(CoreSnapshot& snapshot)
+{
+    SnapshotZ80Mem& s = *snapshot._z80MemStuff;
+
+    COPY_ARRAY(s, _readBuffer);
+    COPY_MEMBER(s, _readBufferIndex);
+    COPY_MEMBER(s, _readTimeout);
+
+    COPY_MEMBER(s, _mainStatus);
+    COPY_MEMBER(s, _data);
+    COPY_MEMBER(s, _dataDirection);
+    COPY_MEMBER(s, _motor);
+    COPY_MEMBER(s, _currentDrive);
+    COPY_MEMBER(s, _currentHead);
+    COPY_ARRAY(s, _status);
+    COPY_ARRAY(s, _seekCompleted);
+    COPY_ARRAY(s, _statusChanged);
+
+    COPY_MEMBER(s, _phase);
+    COPY_ARRAY(s, _commandBytes);
+    COPY_MEMBER(s, _commandByteCount);
+    COPY_ARRAY(s, _execBytes);
+    COPY_MEMBER(s, _execByteCount);
+    COPY_MEMBER(s, _execIndex);
+    COPY_ARRAY(s, _resultBytes);
+    COPY_MEMBER(s, _resultByteCount);
+    COPY_MEMBER(s, _resultIndex);
+
+    COPY_MEMBER(s, _stepReadTime);
+    COPY_MEMBER(s, _headLoadTime);
+    COPY_MEMBER(s, _headUnloadTime);
+    COPY_MEMBER(s, _nonDmaMode);
+
+    s._currentSector0 = _drives[0]._currentSector;
+    s._currentTrack0 = _drives[0]._currentTrack;
+    s._hasDisk0 = _drives[0]._hasDisk;
+
+    s._currentSector1 = _drives[1]._currentSector;
+    s._currentTrack1 = _drives[1]._currentTrack;
+    s._hasDisk1 = _drives[1]._hasDisk;
+
+
+    // Save floppy images...
+    size_t size = _drives[0]._diskImage.size();
+    snapshot._floppyAImage->SetCount(size);
+
+    memcpy(snapshot._floppyAImage->Data(), _drives[0]._diskImage.data(), size);
+}
+
+#define LOAD_ARRAY(x, arg) memcpy_s(arg, sizeof(arg), x.arg, sizeof(x.arg))
+#define LOAD_MEMBER(x, arg) arg = x.arg
+
+void FDC::LoadFrom(CoreSnapshot& snapshot)
+{
+    SnapshotZ80Mem& s = *snapshot._z80MemStuff;
+
+    LOAD_ARRAY(s, _readBuffer);
+    LOAD_MEMBER(s, _readBufferIndex);
+    LOAD_MEMBER(s, _readTimeout);
+
+    LOAD_MEMBER(s, _mainStatus);
+    LOAD_MEMBER(s, _data);
+    LOAD_MEMBER(s, _dataDirection);
+    LOAD_MEMBER(s, _motor);
+    LOAD_MEMBER(s, _currentDrive);
+    LOAD_MEMBER(s, _currentHead);
+    LOAD_ARRAY(s, _status);
+    LOAD_ARRAY(s, _seekCompleted);
+    LOAD_ARRAY(s, _statusChanged);
+
+    //LOAD_MEMBER(s, _phase);
+    _phase = (Phase)s._phase;
+    LOAD_ARRAY(s, _commandBytes);
+    LOAD_MEMBER(s, _commandByteCount);
+    LOAD_ARRAY(s, _execBytes);
+    LOAD_MEMBER(s, _execByteCount);
+    LOAD_MEMBER(s, _execIndex);
+    LOAD_ARRAY(s, _resultBytes);
+    LOAD_MEMBER(s, _resultByteCount);
+    LOAD_MEMBER(s, _resultIndex);
+
+    LOAD_MEMBER(s, _stepReadTime);
+    LOAD_MEMBER(s, _headLoadTime);
+    LOAD_MEMBER(s, _headUnloadTime);
+    LOAD_MEMBER(s, _nonDmaMode);
+
+    _drives[0]._currentSector = s._currentSector0;
+    _drives[0]._currentTrack = s._currentTrack0;
+    _drives[0]._hasDisk = s._hasDisk0;
+    _drives[0]._tempDiskLoaded = false;
+    _drives[0]._tempDisk = Disk();
+
+    _drives[1]._currentSector = s._currentSector1;
+    _drives[1]._currentTrack = s._currentTrack1;
+    _drives[1]._hasDisk = s._hasDisk1;
+    _drives[1]._tempDiskLoaded = false;
+    _drives[1]._tempDisk = Disk();
+
+
+    if (snapshot._floppyAImage == nullptr)
+    {
+        _drives[0]._diskImage.resize(0);
+    }
+    else
+    {
+        size_t size = snapshot._floppyAImage->Size();
+        _drives[0]._diskImage.resize(size);
+
+        memcpy_s(_drives[0]._diskImage.data(), _drives[0]._diskImage.size(), snapshot._floppyAImage->Data(), size);
+    }
 }
 
 void FDC::Init()
@@ -381,7 +497,7 @@ void FDC::Tick()
             if (_execIndex < _execByteCount)
             {
                 FDD& drive = CurrentDrive();
-                Sector& sec = drive._disk._tracks[drive._currentTrack]._sectors[drive._currentSector];
+                Sector& sec = drive.GetDisk()._tracks[drive._currentTrack]._sectors[drive._currentSector];
                 byte b = sec._data.at(_execIndex);
 
                 PushReadBuffer(b);
@@ -858,6 +974,44 @@ StreamWriter& operator<<(StreamWriter& s, const FDC::Phase& phase)
 StreamReader& operator>>(StreamReader& s, FDC::Phase& phase)
 {
     s >> (int&) phase;
+
+    return s;
+}
+
+std::ostream& operator<<(std::ostream& s, const FDC& fdc)
+{
+    s << "FDC: Read timeout: " << (int)fdc._readTimeout << std::endl;
+
+    s << "FDC: Main status: " << (int)fdc._mainStatus << std::endl;
+    s << (int)fdc._data << std::endl;
+    s << (int)fdc._dataDirection << std::endl;
+    s << (int)fdc._motor << std::endl;
+    s << (int)fdc._currentDrive << std::endl;
+    s << (int)fdc._currentHead << std::endl;
+    s << StringifyByteArray(fdc._status) << std::endl;
+
+    s << "FDC: Seek completed: " << fdc._seekCompleted[0] << fdc._seekCompleted[1] << std::endl;
+    s << "FDC: Status changed: " << fdc._statusChanged[0] << fdc._statusChanged[1] << std::endl;
+
+    s << "FDC: Phase: " << (int)fdc._phase << std::endl;
+    s << "FDC: Command bytes: " << StringifyByteArray(fdc._commandBytes) << std::endl;
+    s << "FDC: Command bytes count: " << (int)fdc._commandByteCount << std::endl;
+    s << "FDC: Exec bytes: " << StringifyByteArray(fdc._execBytes) << std::endl;
+    s << "FDC: Exec bytes count: " << (int)fdc._execByteCount << std::endl;
+    s << "FDC: Exec index: " << (int)fdc._execIndex << std::endl;
+    s << "FDC: Result bytes: " << StringifyByteArray(fdc._resultBytes) << std::endl;
+    s << "FDC: Result bytes count: " << (int)fdc._resultByteCount << std::endl;
+    s << "FDC: Result index: " << (int)fdc._resultIndex << std::endl;
+
+    s << "FDC: Step read time: " << (int)fdc._stepReadTime << std::endl;;
+    s << "FDC: Head load time: " << (int)fdc._headLoadTime << std::endl;;
+    s << "FDC: Head unload time: " << (int)fdc._headUnloadTime << std::endl;;
+    s << "FDC: Non DMA mode: " << (int)fdc._nonDmaMode << std::endl;;
+    s << "FDC: Read buffer: " << StringifyByteArray(fdc._readBuffer) << std::endl;;
+    s << "FDC: Read buffer index: " << (int)fdc._readBufferIndex << std::endl;;
+
+    s << fdc._drives[0];
+    s << fdc._drives[1];
 
     return s;
 }

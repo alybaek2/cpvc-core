@@ -314,7 +314,7 @@ void Core::LoadDisc(byte drive, const byte* pBuffer, int size)
     Disk disk;
     disk.LoadDisk(buffer.data(), (int) buffer.size());
 
-    _fdc._drives[drive].Load(disk);
+    _fdc._drives[drive].Load(disk, buffer);
 }
 
 void Core::Step(byte stopReason)
@@ -1578,14 +1578,48 @@ StreamReader& operator>>(StreamReader& s, Core& core)
     return s;
 }
 
+std::ostream& operator<<(std::ostream& s, const Core& core)
+{
+    s << "Ticks: " << core._ticks << std::endl;
+    s << "AF: " << (int)core.AF << std::endl;
+    s << "BC: " << (int)core.BC << std::endl;
+    s << "DE: " << (int)core.DE << std::endl;
+    s << "HL: " << (int)core.HL << std::endl;
+    s << "AF': " << (int)core.AF_ << std::endl;
+    s << "BC': " << (int)core.BC_ << std::endl;
+    s << "DE': " << (int)core.DE_ << std::endl;
+    s << "HL': " << (int)core.HL_ << std::endl;
+    s << "IX: " << (int)core.IX << std::endl;
+    s << "IY: " << (int)core.IY << std::endl;
+    s << "PC: " << (int)core.PC << std::endl;
+    s << "SP: " << (int)core.SP << std::endl;
+    s << "IFF1: " << core._iff1 << std::endl;
+    s << "IFF2: " << core._iff2 << std::endl;
+    s << "Interrupt requested: " << core._interruptRequested << std::endl;
+    s << "Interrupt mode: " << (int)core._interruptMode << std::endl;
+    s << "EI delay counter: " << (int)core._eiDelay << std::endl;
+    s << "Halted: " << core._halted << std::endl;
+
+    s << core._memory;
+    s << core._keyboard;
+    s << core._gateArray;
+    s << core._fdc;
+
+    return s;
+}
+
 bool Core::CreateSnapshot(int id)
 {
     if (_currentSnapshot == nullptr)
     {
         _currentSnapshot = std::make_shared<CoreSnapshot>();
-        _currentSnapshot->_z80MemStuff = std::make_shared<Blob<SnapshotZ80Mem>>(1);
-        _currentSnapshot->_screenBlob = std::make_shared<Blob<byte>>((size_t)(_scrHeight * _scrPitch));
     }
+
+    _currentSnapshot->_z80MemStuff->SetCount(1);
+    _currentSnapshot->_screenBlob->SetCount((size_t)(_scrHeight * _scrPitch));
+    _currentSnapshot->_floppyAImage->SetCount(_fdc._drives[0]._diskImage.size());
+    _currentSnapshot->_floppyBImage->SetCount(_fdc._drives[1]._diskImage.size());
+    _currentSnapshot->_tapeImage->SetCount(_tape._buffer.size());
 
     SnapshotZ80Mem& s = *_currentSnapshot->_z80MemStuff;
 
@@ -1629,11 +1663,13 @@ bool Core::CreateSnapshot(int id)
     _memory.SaveTo(s);
     _memory.SaveTo(_currentSnapshot->mem2nd64k);
 
-    _currentSnapshot->_fdc.CopyFrom(_fdc);
     _currentSnapshot->_tape.CopyFrom(_tape);
 
     // Screen
     memcpy(_currentSnapshot->_screenBlob->Data(), _pScreen, _currentSnapshot->_screenBlob->Size());
+
+    // Floppy stuff
+    _fdc.SaveTo(*_currentSnapshot);
 
     _newSnapshots[id] = _currentSnapshot;
 
@@ -1707,8 +1743,10 @@ bool Core::RevertToSnapshot(int id)
 
     memcpy(_pScreen, snapshot._screenBlob->Data(), snapshot._screenBlob->Size());
 
-    _fdc.CopyFrom(snapshot._fdc);
     _tape.CopyFrom(snapshot._tape);
+
+    // Floppy stuff
+    _fdc.LoadFrom(snapshot);
 
     return true;
 }

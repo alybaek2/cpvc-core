@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.h"
+#include <sstream>
 
 #include "Memory.h"
 #include "IBus.h"
@@ -40,4 +41,6 @@ public:
 
     friend StreamWriter& operator<<(StreamWriter& s, const GateArray& gateArray);
     friend StreamReader& operator>>(StreamReader& s, GateArray& gateArray);
+
+    friend std::ostream& operator<<(std::ostream& s, const GateArray& gateArray);
 };

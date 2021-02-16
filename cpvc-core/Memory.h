@@ -4,6 +4,7 @@
 #include <memory>
 #include <array>
 #include "common.h"
+#include "stringify.h"
 #include "StreamReader.h"
 #include "StreamWriter.h"
 
@@ -244,13 +245,35 @@ public:
             memory._romIds[i.first] = Memory::GetRomId(memory._roms[i.first]);
         }
 
-
         // Probably more consistent to serialize each read and write bank separately, as it's not
         // guaranteed that they will be in sync with _ramConfig, even though they should be!
         memory.ConfigureRAM();
 
         // Ensure the upper rom is copied to _upperRom...
         memory.SelectROM(memory._selectedUpperRom);
+
+        return s;
+    }
+
+    friend std::ostream& operator<<(std::ostream& s, const Memory& memory)
+    {
+        for (const Mem16k bank : memory._banks)
+        {
+            s << "Memory (16k): " << StringifyByteArray(memory._lowerRom) << std::endl;
+        }
+
+        s << memory._banks;
+
+        s << (int)memory._ramConfig << std::endl;
+        s << memory._lowerRomEnabled << std::endl;
+        s << memory._upperRomEnabled << std::endl;
+        s << (int)memory._selectedUpperRom << std::endl;
+        s << "Lower rom: " << StringifyByteArray(memory._lowerRom) << std::endl;
+        
+        for (std::pair<byte, Mem16k> x : memory._roms)
+        {
+            s << "Rom " << (int)x.first << ": " << StringifyByteArray(x.second) << std::endl;
+        }
 
         return s;
     }

@@ -5,6 +5,8 @@
 #include "FDD.h"
 #include "Disk.h"
 
+struct CoreSnapshot;
+
 // Status bits
 constexpr byte statusDrive0Busy = 0x01;
 constexpr byte statusDrive1Busy = 0x02;
@@ -131,6 +133,9 @@ public:
         _drives[1].CopyFrom(fdc._drives[1]);
     }
 
+    void SaveTo(CoreSnapshot& snapshot);
+    void LoadFrom(CoreSnapshot& snapshot);
+
     // Note that while the FDC technically does support 4 drives, the DS1 (Drive Select 1)
     // pin is physically disconnected on the CPC, meaning only 2 drives can be supported.
     FDD _drives[2];
@@ -224,5 +229,7 @@ private:
 
     friend StreamWriter& operator<<(StreamWriter& s, const Phase& fdc);
     friend StreamReader& operator>>(StreamReader& s, Phase& fdc);
+
+    friend std::ostream& operator<<(std::ostream& s, const FDC& fdc);
 };
 

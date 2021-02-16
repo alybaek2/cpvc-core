@@ -70,7 +70,6 @@ public:
         _motor = tape._motor;
         _playing = tape._playing;
 
-        _size = tape._size;
         _buffer = tape._buffer;
 
         _currentBlockIndex = tape._currentBlockIndex;
@@ -87,14 +86,7 @@ public:
         _dataBlock = tape._dataBlock;
         _speedBlock = tape._speedBlock;
 
-        if (tape._pBuffer == nullptr)
-        {
-            _pBuffer = nullptr;
-        }
-        else
-        {
-            _pBuffer = _buffer.data();
-        }
+        _hasTape = tape._hasTape;
     }
 
     bool _level;
@@ -107,10 +99,10 @@ public:
     void Eject();
     void Tick();
 
-private:
-    byte* _pBuffer;
-    int _size;
     bytevector _buffer;
+
+private:
+    bool _hasTape;
 
     enum BlockPhase
     {
@@ -144,7 +136,7 @@ private:
 
     qword TicksToNextLevelChange();
 
-    dword BlockSize(byte* p);
+    dword BlockSize();
 
     qword DataPhase(byte* pData);
     void EndPhase();

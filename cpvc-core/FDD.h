@@ -1,7 +1,7 @@
 #pragma once
 
 #include "common.h"
-
+#include "stringify.h"
 #include "Disk.h"
 
 struct CHRN
@@ -32,7 +32,7 @@ public:
         _currentSector = fdd._currentSector;
         _currentTrack = fdd._currentTrack;
         _hasDisk = fdd._hasDisk;
-        _disk = fdd._disk;
+        _diskImage = fdd._diskImage;
     }
 
     // Member variables describing the location of the read head.
@@ -40,13 +40,18 @@ public:
     size_t _currentTrack;
 
     bool _hasDisk;
-    Disk _disk;
+    Disk _tempDisk;
+    bool _tempDiskLoaded;
+
+    bytevector _diskImage;
+
+    Disk& GetDisk();
 
     void Init();
 
     void Eject();
 
-    bool Load(Disk& d);
+    bool Load(Disk& d, const bytevector& image);
 
     // Floppy Drive functions...
     bool IsReady();
@@ -88,5 +93,7 @@ public:
 private:
     friend StreamWriter& operator<<(StreamWriter& s, const FDD& fdd);
     friend StreamReader& operator>>(StreamReader& s, FDD& fdd);
+
+    friend std::ostream& operator<<(std::ostream& s, const FDD& fdc);
 };
 

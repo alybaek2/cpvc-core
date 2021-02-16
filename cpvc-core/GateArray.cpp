@@ -164,3 +164,14 @@ StreamReader& operator>>(StreamReader& s, GateArray& gateArray)
 
     return s;
 }
+
+std::ostream& operator<<(std::ostream& s, const GateArray& gateArray)
+{
+    s << "Gate Array: Selected Pen: " << (int)gateArray._selectedPen << std::endl;
+    s << "Gate Array: Pens: " << StringifyByteArray(gateArray._pen) << std::endl;
+
+    s << "Gate Array: Border: " << (int)gateArray._border << std::endl;
+    s << "Gate Array: Mode: " << (int)gateArray._mode << std::endl;
+
+    return s;
+}

@@ -139,6 +139,7 @@
     <ClInclude Include="Sector.h" />
     <ClInclude Include="StreamWriter.h" />
     <ClInclude Include="StreamReader.h" />
+    <ClInclude Include="stringify.h" />
     <ClInclude Include="Tape.h" />
     <ClInclude Include="Track.h" />
   </ItemGroup>

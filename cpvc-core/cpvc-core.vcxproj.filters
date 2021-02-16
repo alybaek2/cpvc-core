@@ -81,6 +81,9 @@
     <ClInclude Include="Blob.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="stringify.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PSG.cpp">

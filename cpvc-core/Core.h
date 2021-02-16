@@ -101,6 +101,8 @@ public:
     friend StreamWriter& operator<<(StreamWriter& s, const Core& core);
     friend StreamReader& operator>>(StreamReader& s, Core& core);
 
+    friend std::ostream& operator<<(std::ostream& s, const Core& core);
+
 private:
     // Hardware components.
     Memory _memory;

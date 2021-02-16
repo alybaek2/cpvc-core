@@ -3,11 +3,11 @@
 #include <memory>
 #include <vector>
 
-typedef unsigned char byte;
-typedef signed char offset;
-typedef unsigned short word;
-typedef unsigned int dword;
-typedef unsigned __int64 qword;
+typedef uint8_t byte;
+typedef int8_t offset;
+typedef uint16_t word;
+typedef uint32_t dword;
+typedef uint64_t qword;
 
 typedef std::vector<byte> bytevector;
 typedef std::vector<word> wordvector;
