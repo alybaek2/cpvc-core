@@ -4,6 +4,71 @@
 #include <map>
 #include <vector>
 
+//#include "Serialize.h"
+
+//template<typename X>
+//inline size_t ArgsSize(const X& x)
+//{
+//    return sizeof(x);
+//}
+//
+//template<typename X, typename... Args>
+//inline size_t ArgsSize(const X& x, const Args&... args)
+//{
+//    return ArgsSize(x) + ArgsSize(args...);
+//}
+//
+//inline void SerializeWrite(byte*& p, const bool& b)
+//{
+//    bool* pw = reinterpret_cast<bool*>(p);
+//    *pw = b;
+//    p += sizeof(b);
+//}
+//
+//inline void SerializeWrite(byte*& p, const byte& b)
+//{
+//    *p = b;
+//    p += sizeof(b);
+//}
+//
+//inline void SerializeWrite(byte*& p, const word& w)
+//{
+//    word* pw = reinterpret_cast<word*>(p);
+//    *pw = w;
+//    p += sizeof(w);
+//}
+//
+//inline void SerializeWrite(byte*& p, const dword& d)
+//{
+//    dword* pd = reinterpret_cast<dword*>(p);
+//    *pd = d;
+//    p += sizeof(d);
+//}
+//
+//inline void SerializeWrite(byte*& p, const qword& w)
+//{
+//    qword* pq = reinterpret_cast<qword*>(p);
+//    *pq = w;
+//    p += sizeof(w);
+//}
+//
+//template <int S>
+//inline void SerializeWrite(byte*& p, const byte(&a)[S])
+//{
+//    memcpy(p, a, S);
+//    p += S;
+//}
+//
+//template<typename X, typename... Args>
+//inline void SerializeWrite(byte*& p, const X& x, const Args&... args)
+//{
+//    SerializeWrite(p, x);
+//    SerializeWrite(p, args...);
+//}
+
+
+
+
 class StreamWriter
 {
 public:
@@ -19,6 +84,11 @@ public:
     size_t Size() const
     {
         return _buffer.size();
+    }
+
+    void Reserve(size_t capacity)
+    {
+        _buffer.reserve(capacity);
     }
 
     size_t CopyTo(byte* pBuffer, size_t bufferSize) const
@@ -141,18 +211,64 @@ public:
         }
     }
 
+    template<typename X>
+    inline void WriteSimpleEx(const X& x)
+    {
+        size_t s = ArgsSize(x);
+
+        size_t oldSize = _buffer.size();
+        _buffer.resize(oldSize + s);
+        byte* p = _buffer.data() + oldSize;
+
+        SerializeWrite(p, x);
+        //SerializeWrite(p, args...);
+    }
+
+    //template<typename X, typename... Args>
+    //inline void WriteSimpleEx(const X& x, const Args&... args)
+    //{
+    //    size_t s = ArgsSize(args...);
+
+    //    size_t oldSize = _buffer.size();
+    //    _buffer.resize(oldSize + s);
+    //    byte* p = _buffer.data() + oldSize;
+
+    //    SerializeWrite(p, x);
+    //    SerializeWrite(p, args...);
+    //}
+
+    //template<typename... Args>
+    //inline void WriteSimpleEx(const Args&... args)
+    //{
+    //    size_t s = ArgsSize(args...);
+
+    //    size_t oldSize = _buffer.size();
+    //    _buffer.resize(oldSize + s);
+    //    byte* p = _buffer.data() + oldSize;
+
+    //    //SerializeWrite(p, x);
+    //    SerializeWrite(p, args...);
+    //}
+
 private:
     bytevector _buffer;
 
     template<typename T>
     StreamWriter& Write(const T& data)
     {
-        byte* p = (byte*)& data;
-        for (int x = 0; x < sizeof(data); x++)
-        {
-            _buffer.push_back(p[x]);
-        }
+        size_t size = _buffer.size();
+        _buffer.resize(size + sizeof(data));
+        memcpy_s(_buffer.data() + size, sizeof(data), (byte*)&data, sizeof(data));
 
         return (*this);
     }
+
+    void Write(void* pData, size_t offset, size_t size)
+    {
+        size_t oldSize = _buffer.size();
+        size_t newSize = oldSize + size;
+        _buffer.resize(newSize);
+        memcpy_s(_buffer.data() + oldSize, size, ((byte*)pData) + offset, size);
+    }
 };
+

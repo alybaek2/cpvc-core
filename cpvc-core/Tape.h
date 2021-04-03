@@ -1,6 +1,8 @@
 #pragma once
 
 #include "common.h"
+#include "stringify.h"
+
 #include "StreamReader.h"
 #include "StreamWriter.h"
 
@@ -63,31 +65,6 @@ class Tape
 public:
     Tape();
     ~Tape();
-
-    void CopyFrom(const Tape& tape)
-    {
-        _level = tape._level;
-        _motor = tape._motor;
-        _playing = tape._playing;
-
-        _buffer = tape._buffer;
-
-        _currentBlockIndex = tape._currentBlockIndex;
-        _blockIndex = tape._blockIndex;
-        _phase = tape._phase;
-        _pulsesRemaining = tape._pulsesRemaining;
-        _dataIndex = tape._dataIndex;
-        _levelChanged = tape._levelChanged;
-        _dataByte = tape._dataByte;
-        _remainingBits = tape._remainingBits;
-        _pulseIndex = tape._pulseIndex;
-        _pause = tape._pause;
-
-        _dataBlock = tape._dataBlock;
-        _speedBlock = tape._speedBlock;
-
-        _hasTape = tape._hasTape;
-    }
 
     bool _level;
     bool _motor;
@@ -156,5 +133,15 @@ private:
 
     friend StreamWriter& operator<<(StreamWriter& s, const Tape::BlockPhase& phase);
     friend StreamReader& operator>>(StreamReader& s, Tape::BlockPhase& phase);
+
+    friend std::ostringstream& operator<<(std::ostringstream& s, const Tape& tape);
+
+    friend uint64_t SerializeSize(const Tape& tape);
+    friend void SerializeWrite(byte*& p, const Tape& tape);
+    friend void SerializeRead(byte*& p, Tape& tape);
+
+    friend uint64_t SerializeSize(const BlockPhase& phase);
+    friend void SerializeWrite(byte*& p, const BlockPhase& phase);
+    friend void SerializeRead(byte*& p, BlockPhase& phase);
 };
 

@@ -1,6 +1,8 @@
 #include "Core.h"
 #include "CoreSnapshot.h"
 
+#include "Serialize.h"
+
 Core::Core() : _pBus(&_bus)
 {
     Init();
@@ -42,7 +44,6 @@ void Core::Init()
 
     _ticks = 0;
 
-    _pScreen = nullptr;
     _scrPitch = 0;
     _scrHeight = 0;
     _scrWidth = 0;
@@ -69,17 +70,23 @@ bool Core::KeyPress(byte keycode, bool down)
 }
 
 // Screen methods
-void Core::SetScreen(byte* pBuffer, word pitch, word height, word width)
+void Core::SetScreen(word pitch, word height, word width)
 {
     _scrPitch = pitch;
     _scrWidth = width / 16;  // _scrWidth is in CRTC chars (16 pixels per char).
     _scrHeight = height;
-    _pScreen = pBuffer;
+
+    _screen.resize(height * pitch);
 }
 
-byte* Core::GetScreen()
+void Core::CopyScreen(byte* pBuffer, size_t size)
 {
-    return _pScreen;
+    if (pBuffer == nullptr)
+    {
+        return;
+    }
+
+    memcpy_s(pBuffer, size, _screen.data(), _screen.size());
 }
 
 void Core::SetFrequency(dword frequency)
@@ -175,11 +182,6 @@ void Core::NonCPUTick(byte ticks)
 
 void Core::VideoRender()
 {
-    if (_pScreen == nullptr)
-    {
-        return;
-    }
-
     // Ensure the current x and y coordinates don't cause us to overrun the screen buffer.
     if (_crtc._x >= _scrWidth || _crtc._y >= _scrHeight)
     {
@@ -191,7 +193,7 @@ void Core::VideoRender()
     bool inBorder = !inScreen && !inSync;
 
     dword offset = (_scrPitch * _crtc._y) + _crtc._x * 16;
-    byte* pPixel = _pScreen + offset;
+    byte* pPixel = _screen.data() + offset;
 
     if (inSync)
     {
@@ -1578,7 +1580,7 @@ StreamReader& operator>>(StreamReader& s, Core& core)
     return s;
 }
 
-std::ostream& operator<<(std::ostream& s, const Core& core)
+std::ostringstream& operator<<(std::ostringstream& s, const Core& core)
 {
     s << "Ticks: " << core._ticks << std::endl;
     s << "AF: " << (int)core.AF << std::endl;
@@ -1604,83 +1606,20 @@ std::ostream& operator<<(std::ostream& s, const Core& core)
     s << core._keyboard;
     s << core._gateArray;
     s << core._fdc;
+    s << core._psg;
+    s << core._ppi;
+    s << core._crtc;
+    s << core._tape;
 
     return s;
 }
 
 bool Core::CreateSnapshot(int id)
 {
-    if (_currentSnapshot == nullptr)
-    {
-        _currentSnapshot = std::make_shared<CoreSnapshot>();
-    }
+    std::shared_ptr<CoreSnapshot> currentSnapshot = std::make_shared<CoreSnapshot>(*this, _lastSnapshot);
 
-    _currentSnapshot->_z80MemStuff->SetCount(1);
-    _currentSnapshot->_screenBlob->SetCount((size_t)(_scrHeight * _scrPitch));
-    _currentSnapshot->_floppyAImage->SetCount(_fdc._drives[0]._diskImage.size());
-    _currentSnapshot->_floppyBImage->SetCount(_fdc._drives[1]._diskImage.size());
-    _currentSnapshot->_tapeImage->SetCount(_tape._buffer.size());
-
-    SnapshotZ80Mem& s = *_currentSnapshot->_z80MemStuff;
-
-    s.AF = AF;
-    s.BC = BC;
-    s.DE = DE;
-    s.HL = HL;
-    s.IR = IR;
-    s.AF_ = AF_;
-    s.BC_ = BC_;
-    s.DE_ = DE_;
-    s.HL_ = HL_;
-    s.IX = IX;
-    s.IY = IY;
-    s.SP = SP;
-    s.PC = PC;
-    s._iff1 = _iff1;
-    s._iff2 = _iff2;
-    s._interruptRequested = _interruptRequested;
-    s._interruptMode = _interruptMode;
-    s._eiDelay = _eiDelay;
-    s._halted = _halted;
-
-    s._keyboard.CopyFrom(_keyboard);
-    s._crtc.CopyFrom(_crtc);
-    s._psg.CopyFrom(_psg);
-    s._ppi.CopyFrom(_ppi);
-    s._gateArray.CopyFrom(_gateArray);
-
-    s._ticks = _ticks;
-    s._frequency = _frequency;
-    s._audioTickTotal = _audioTickTotal;
-    s._audioTicksToNextSample = _audioTicksToNextSample;
-    s._audioSampleCount = _audioSampleCount;
-
-    s._scrHeight = _scrHeight;
-    s._scrWidth = _scrWidth;
-    s._scrPitch = _scrPitch;
-
-
-    _memory.SaveTo(s);
-    _memory.SaveTo(_currentSnapshot->mem2nd64k);
-
-    _currentSnapshot->_tape.CopyFrom(_tape);
-
-    // Screen
-    memcpy(_currentSnapshot->_screenBlob->Data(), _pScreen, _currentSnapshot->_screenBlob->Size());
-
-    // Floppy stuff
-    _fdc.SaveTo(*_currentSnapshot);
-
-    _newSnapshots[id] = _currentSnapshot;
-
-    std::shared_ptr<CoreSnapshot> nextSnaphot;
-    if (_lastSnapshot != nullptr)
-    {
-        nextSnaphot = _lastSnapshot->SetDiffParent(_currentSnapshot);
-    }
-
-    _lastSnapshot = _currentSnapshot;
-    _currentSnapshot = nextSnaphot;
+    _newSnapshots[id] = currentSnapshot;    
+    _lastSnapshot = currentSnapshot;
 
     return true;
 }
@@ -1699,54 +1638,7 @@ bool Core::RevertToSnapshot(int id)
 
     CoreSnapshot& snapshot = *(_newSnapshots[id].get());
 
-    // Do the Z80 and mem and other stuff...
-    SnapshotZ80Mem& s = *snapshot._z80MemStuff;
-
-    AF = s.AF;
-    BC = s.BC;
-    DE = s.DE;
-    HL = s.HL;
-    IR = s.IR;
-    AF_ = s.AF_;
-    BC_ = s.BC_;
-    DE_ = s.DE_;
-    HL_ = s.HL_;
-    IX = s.IX;
-    IY = s.IY;
-    SP = s.SP;
-    PC = s.PC;
-    _iff1 = s._iff1;
-    _iff2 = s._iff2;
-    _interruptRequested = s._interruptRequested;
-    _interruptMode = s._interruptMode;
-    _eiDelay = s._eiDelay;
-    _halted = s._halted;
-
-    _memory.LoadFrom(s);
-    _memory.LoadFrom(snapshot.mem2nd64k);
-
-    _keyboard.CopyFrom(s._keyboard);
-    _crtc.CopyFrom(s._crtc);
-    _psg.CopyFrom(s._psg);
-    _ppi.CopyFrom(s._ppi);
-    _gateArray.CopyFrom(s._gateArray);
-
-    _ticks = s._ticks;
-    _frequency = s._frequency;
-    _audioTickTotal = s._audioTickTotal;
-    _audioTicksToNextSample = s._audioTicksToNextSample;
-    _audioSampleCount = s._audioSampleCount;
-
-    _scrHeight = s._scrHeight;
-    _scrWidth = s._scrWidth;
-    _scrPitch = s._scrPitch;
-
-    memcpy(_pScreen, snapshot._screenBlob->Data(), snapshot._screenBlob->Size());
-
-    _tape.CopyFrom(snapshot._tape);
-
-    // Floppy stuff
-    _fdc.LoadFrom(snapshot);
+    Serialize::Read(*snapshot._coreStuff, *this);
 
     return true;
 }

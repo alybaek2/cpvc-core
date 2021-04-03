@@ -663,3 +663,35 @@ StreamReader& operator>>(StreamReader& s, Tape::BlockPhase& phase)
 
     return s;
 }
+
+std::ostringstream& operator<<(std::ostringstream& s, const Tape& tape)
+{
+    s << "Tape: Current block index: " << (int)tape._currentBlockIndex << std::endl;
+    s << "Tape: Block index: " << (int)tape._blockIndex << std::endl;
+    s << "Tape: Phase: " << (int)tape._phase << std::endl;
+    s << "Tape: Pulses remaining: " << (int)tape._pulsesRemaining << std::endl;
+    s << "Tape: Data index: " << (int)tape._dataIndex << std::endl;
+    s << "Tape: Level changed: " << (int)tape._levelChanged << std::endl;
+    s << "Tape: Data byte: " << (int)tape._dataByte << std::endl;
+    s << "Tape: Remaining bits: " << (int)tape._remainingBits << std::endl;
+    s << "Tape: Pulse index: " << (int)tape._pulseIndex << std::endl;
+    s << "Tape: Pause: " << (int)tape._pause << std::endl;
+    s << "Tape: Zero length: " << (int)tape._dataBlock._zeroLength << std::endl;
+    s << "Tape: One length: " << (int)tape._dataBlock._oneLength << std::endl;
+    s << "Tape: Used bits last byte: " << (int)tape._dataBlock._usedBitsLastByte << std::endl;
+    s << "Tape: Pause: " << (int)tape._dataBlock._pause << std::endl;
+    s << "Tape: Length: " << (int)tape._dataBlock._length << std::endl;
+    s << "Tape: Pilot pulse length: " << (int)tape._speedBlock._pilotPulseLength << std::endl;
+    s << "Tape: Sync1 length: " << (int)tape._speedBlock._sync1Length << std::endl;
+    s << "Tape: Sync2 length: " << (int)tape._speedBlock._sync2Length << std::endl;
+    s << "Tape: Pilot pulse count: " << (int)tape._speedBlock._pilotPulseCount << std::endl;
+    s << "Tape: Playing: " << (int)tape._playing << std::endl;
+    s << "Tape: Level: " << (int)tape._level << std::endl;
+    s << "Tape: Motor: " << (int)tape._motor << std::endl;
+    s << "Tape: Tick position: " << tape._tickPos << std::endl;
+    s << "Tape: Ticks to next level change: " << tape._ticksToNextLevelChange << std::endl;
+    s << "Tape: Buffer: " << StringifyByteArray(tape._buffer) << std::endl;
+    s << "Tape: Has tape: " << (int)tape._hasTape << std::endl;
+
+    return s;
+}

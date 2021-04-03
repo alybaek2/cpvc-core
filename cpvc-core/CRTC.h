@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.h"
+#include "stringify.h"
 
 #include "IBus.h"
 #include "StreamReader.h"
@@ -11,30 +12,6 @@ class CRTC : public IBus
 public:
     CRTC(bool& requestInterrupt);
     ~CRTC();
-
-    void CopyFrom(const CRTC& crtc)
-    {
-        _x = crtc._x;
-        _y = crtc._y;
-        _hCount = crtc._hCount;
-        _vCount = crtc._vCount;
-        _raster = crtc._raster;
-        _inHSync = crtc._inHSync;
-        _hSyncCount = crtc._hSyncCount;
-        _inVSync = crtc._inVSync;
-        _vSyncCount = crtc._vSyncCount;
-        _inVTotalAdjust = crtc._inVTotalAdjust;
-        _vTotalAdjustCount = crtc._vTotalAdjustCount;
-
-        _scanLineCount = crtc._scanLineCount;
-        _vSyncDelay = crtc._vSyncDelay;
-
-        _memoryAddress = crtc._memoryAddress;
-
-        memcpy(_register, crtc._register, sizeof(_register));
-
-        _selectedRegister = crtc._selectedRegister;
-    }
 
     void Tick();
 
@@ -98,4 +75,10 @@ private:
 
     friend StreamWriter& operator<<(StreamWriter& s, const CRTC& crtc);
     friend StreamReader& operator>>(StreamReader& s, CRTC& crtc);
+
+    friend std::ostringstream& operator<<(std::ostringstream& s, const CRTC& crtc);
+
+    friend uint64_t SerializeSize(const CRTC& crtc);
+    friend void SerializeWrite(byte*& p, const CRTC& crtc);
+    friend void SerializeRead(byte*& p, CRTC& crtc);
 };

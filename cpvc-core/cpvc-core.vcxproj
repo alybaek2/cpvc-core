@@ -137,6 +137,7 @@
     <ClInclude Include="PPI.h" />
     <ClInclude Include="PSG.h" />
     <ClInclude Include="Sector.h" />
+    <ClInclude Include="Serialize.h" />
     <ClInclude Include="StreamWriter.h" />
     <ClInclude Include="StreamReader.h" />
     <ClInclude Include="stringify.h" />

@@ -12,117 +12,117 @@ FDC::~FDC()
 #define COPY_ARRAY(x, arg) memcpy_s(x.arg, sizeof(x.arg), arg, sizeof(arg))
 #define COPY_MEMBER(x, arg) x.arg = arg
 
-void FDC::SaveTo(CoreSnapshot& snapshot)
-{
-    SnapshotZ80Mem& s = *snapshot._z80MemStuff;
-
-    COPY_ARRAY(s, _readBuffer);
-    COPY_MEMBER(s, _readBufferIndex);
-    COPY_MEMBER(s, _readTimeout);
-
-    COPY_MEMBER(s, _mainStatus);
-    COPY_MEMBER(s, _data);
-    COPY_MEMBER(s, _dataDirection);
-    COPY_MEMBER(s, _motor);
-    COPY_MEMBER(s, _currentDrive);
-    COPY_MEMBER(s, _currentHead);
-    COPY_ARRAY(s, _status);
-    COPY_ARRAY(s, _seekCompleted);
-    COPY_ARRAY(s, _statusChanged);
-
-    COPY_MEMBER(s, _phase);
-    COPY_ARRAY(s, _commandBytes);
-    COPY_MEMBER(s, _commandByteCount);
-    COPY_ARRAY(s, _execBytes);
-    COPY_MEMBER(s, _execByteCount);
-    COPY_MEMBER(s, _execIndex);
-    COPY_ARRAY(s, _resultBytes);
-    COPY_MEMBER(s, _resultByteCount);
-    COPY_MEMBER(s, _resultIndex);
-
-    COPY_MEMBER(s, _stepReadTime);
-    COPY_MEMBER(s, _headLoadTime);
-    COPY_MEMBER(s, _headUnloadTime);
-    COPY_MEMBER(s, _nonDmaMode);
-
-    s._currentSector0 = _drives[0]._currentSector;
-    s._currentTrack0 = _drives[0]._currentTrack;
-    s._hasDisk0 = _drives[0]._hasDisk;
-
-    s._currentSector1 = _drives[1]._currentSector;
-    s._currentTrack1 = _drives[1]._currentTrack;
-    s._hasDisk1 = _drives[1]._hasDisk;
-
-
-    // Save floppy images...
-    size_t size = _drives[0]._diskImage.size();
-    snapshot._floppyAImage->SetCount(size);
-
-    memcpy(snapshot._floppyAImage->Data(), _drives[0]._diskImage.data(), size);
-}
-
+//void FDC::SaveTo(CoreSnapshot& snapshot)
+//{
+//    SnapshotZ80Mem& s = *snapshot._z80MemStuff;
+//
+//    COPY_ARRAY(s, _readBuffer);
+//    COPY_MEMBER(s, _readBufferIndex);
+//    COPY_MEMBER(s, _readTimeout);
+//
+//    COPY_MEMBER(s, _mainStatus);
+//    COPY_MEMBER(s, _data);
+//    COPY_MEMBER(s, _dataDirection);
+//    COPY_MEMBER(s, _motor);
+//    COPY_MEMBER(s, _currentDrive);
+//    COPY_MEMBER(s, _currentHead);
+//    COPY_ARRAY(s, _status);
+//    COPY_ARRAY(s, _seekCompleted);
+//    COPY_ARRAY(s, _statusChanged);
+//
+//    COPY_MEMBER(s, _phase);
+//    COPY_ARRAY(s, _commandBytes);
+//    COPY_MEMBER(s, _commandByteCount);
+//    COPY_ARRAY(s, _execBytes);
+//    COPY_MEMBER(s, _execByteCount);
+//    COPY_MEMBER(s, _execIndex);
+//    COPY_ARRAY(s, _resultBytes);
+//    COPY_MEMBER(s, _resultByteCount);
+//    COPY_MEMBER(s, _resultIndex);
+//
+//    COPY_MEMBER(s, _stepReadTime);
+//    COPY_MEMBER(s, _headLoadTime);
+//    COPY_MEMBER(s, _headUnloadTime);
+//    COPY_MEMBER(s, _nonDmaMode);
+//
+//    s._currentSector0 = _drives[0]._currentSector;
+//    s._currentTrack0 = _drives[0]._currentTrack;
+//    s._hasDisk0 = _drives[0]._hasDisk;
+//
+//    s._currentSector1 = _drives[1]._currentSector;
+//    s._currentTrack1 = _drives[1]._currentTrack;
+//    s._hasDisk1 = _drives[1]._hasDisk;
+//
+//
+//    // Save floppy images...
+//    size_t size = _drives[0]._diskImage.size();
+//    snapshot._floppyAImage->SetCount(size);
+//
+//    memcpy(snapshot._floppyAImage->Data(), _drives[0]._diskImage.data(), size);
+//}
+//
 #define LOAD_ARRAY(x, arg) memcpy_s(arg, sizeof(arg), x.arg, sizeof(x.arg))
 #define LOAD_MEMBER(x, arg) arg = x.arg
 
-void FDC::LoadFrom(CoreSnapshot& snapshot)
-{
-    SnapshotZ80Mem& s = *snapshot._z80MemStuff;
-
-    LOAD_ARRAY(s, _readBuffer);
-    LOAD_MEMBER(s, _readBufferIndex);
-    LOAD_MEMBER(s, _readTimeout);
-
-    LOAD_MEMBER(s, _mainStatus);
-    LOAD_MEMBER(s, _data);
-    LOAD_MEMBER(s, _dataDirection);
-    LOAD_MEMBER(s, _motor);
-    LOAD_MEMBER(s, _currentDrive);
-    LOAD_MEMBER(s, _currentHead);
-    LOAD_ARRAY(s, _status);
-    LOAD_ARRAY(s, _seekCompleted);
-    LOAD_ARRAY(s, _statusChanged);
-
-    //LOAD_MEMBER(s, _phase);
-    _phase = (Phase)s._phase;
-    LOAD_ARRAY(s, _commandBytes);
-    LOAD_MEMBER(s, _commandByteCount);
-    LOAD_ARRAY(s, _execBytes);
-    LOAD_MEMBER(s, _execByteCount);
-    LOAD_MEMBER(s, _execIndex);
-    LOAD_ARRAY(s, _resultBytes);
-    LOAD_MEMBER(s, _resultByteCount);
-    LOAD_MEMBER(s, _resultIndex);
-
-    LOAD_MEMBER(s, _stepReadTime);
-    LOAD_MEMBER(s, _headLoadTime);
-    LOAD_MEMBER(s, _headUnloadTime);
-    LOAD_MEMBER(s, _nonDmaMode);
-
-    _drives[0]._currentSector = s._currentSector0;
-    _drives[0]._currentTrack = s._currentTrack0;
-    _drives[0]._hasDisk = s._hasDisk0;
-    _drives[0]._tempDiskLoaded = false;
-    _drives[0]._tempDisk = Disk();
-
-    _drives[1]._currentSector = s._currentSector1;
-    _drives[1]._currentTrack = s._currentTrack1;
-    _drives[1]._hasDisk = s._hasDisk1;
-    _drives[1]._tempDiskLoaded = false;
-    _drives[1]._tempDisk = Disk();
-
-
-    if (snapshot._floppyAImage == nullptr)
-    {
-        _drives[0]._diskImage.resize(0);
-    }
-    else
-    {
-        size_t size = snapshot._floppyAImage->Size();
-        _drives[0]._diskImage.resize(size);
-
-        memcpy_s(_drives[0]._diskImage.data(), _drives[0]._diskImage.size(), snapshot._floppyAImage->Data(), size);
-    }
-}
+//void FDC::LoadFrom(CoreSnapshot& snapshot)
+//{
+//    SnapshotZ80Mem& s = *snapshot._z80MemStuff;
+//
+//    LOAD_ARRAY(s, _readBuffer);
+//    LOAD_MEMBER(s, _readBufferIndex);
+//    LOAD_MEMBER(s, _readTimeout);
+//
+//    LOAD_MEMBER(s, _mainStatus);
+//    LOAD_MEMBER(s, _data);
+//    LOAD_MEMBER(s, _dataDirection);
+//    LOAD_MEMBER(s, _motor);
+//    LOAD_MEMBER(s, _currentDrive);
+//    LOAD_MEMBER(s, _currentHead);
+//    LOAD_ARRAY(s, _status);
+//    LOAD_ARRAY(s, _seekCompleted);
+//    LOAD_ARRAY(s, _statusChanged);
+//
+//    //LOAD_MEMBER(s, _phase);
+//    _phase = (Phase)s._phase;
+//    LOAD_ARRAY(s, _commandBytes);
+//    LOAD_MEMBER(s, _commandByteCount);
+//    LOAD_ARRAY(s, _execBytes);
+//    LOAD_MEMBER(s, _execByteCount);
+//    LOAD_MEMBER(s, _execIndex);
+//    LOAD_ARRAY(s, _resultBytes);
+//    LOAD_MEMBER(s, _resultByteCount);
+//    LOAD_MEMBER(s, _resultIndex);
+//
+//    LOAD_MEMBER(s, _stepReadTime);
+//    LOAD_MEMBER(s, _headLoadTime);
+//    LOAD_MEMBER(s, _headUnloadTime);
+//    LOAD_MEMBER(s, _nonDmaMode);
+//
+//    _drives[0]._currentSector = s._currentSector0;
+//    _drives[0]._currentTrack = s._currentTrack0;
+//    _drives[0]._hasDisk = s._hasDisk0;
+//    _drives[0]._tempDiskLoaded = false;
+//    _drives[0]._tempDisk = Disk();
+//
+//    _drives[1]._currentSector = s._currentSector1;
+//    _drives[1]._currentTrack = s._currentTrack1;
+//    _drives[1]._hasDisk = s._hasDisk1;
+//    _drives[1]._tempDiskLoaded = false;
+//    _drives[1]._tempDisk = Disk();
+//
+//
+//    if (snapshot._floppyAImage == nullptr)
+//    {
+//        _drives[0]._diskImage.resize(0);
+//    }
+//    else
+//    {
+//        size_t size = snapshot._floppyAImage->Size();
+//        _drives[0]._diskImage.resize(size);
+//
+//        memcpy_s(_drives[0]._diskImage.data(), _drives[0]._diskImage.size(), snapshot._floppyAImage->Data(), size);
+//    }
+//}
 
 void FDC::Init()
 {
@@ -978,7 +978,7 @@ StreamReader& operator>>(StreamReader& s, FDC::Phase& phase)
     return s;
 }
 
-std::ostream& operator<<(std::ostream& s, const FDC& fdc)
+std::ostringstream& operator<<(std::ostringstream& s, const FDC& fdc)
 {
     s << "FDC: Read timeout: " << (int)fdc._readTimeout << std::endl;
 

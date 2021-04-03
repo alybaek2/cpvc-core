@@ -27,14 +27,6 @@ public:
     FDD();
     ~FDD();
 
-    void CopyFrom(const FDD& fdd)
-    {
-        _currentSector = fdd._currentSector;
-        _currentTrack = fdd._currentTrack;
-        _hasDisk = fdd._hasDisk;
-        _diskImage = fdd._diskImage;
-    }
-
     // Member variables describing the location of the read head.
     byte _currentSector;
     size_t _currentTrack;
@@ -94,6 +86,6 @@ private:
     friend StreamWriter& operator<<(StreamWriter& s, const FDD& fdd);
     friend StreamReader& operator>>(StreamReader& s, FDD& fdd);
 
-    friend std::ostream& operator<<(std::ostream& s, const FDD& fdc);
+    friend std::ostringstream& operator<<(std::ostringstream& s, const FDD& fdc);
 };
 

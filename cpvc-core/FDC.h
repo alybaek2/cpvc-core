@@ -125,17 +125,6 @@ public:
     FDC();
     ~FDC();
 
-    void CopyFrom(const FDC& fdc)
-    {
-        //_drives[0] = fdc._drives[0];
-        //_drives[1] = fdc._drives[1];
-        _drives[0].CopyFrom(fdc._drives[0]);
-        _drives[1].CopyFrom(fdc._drives[1]);
-    }
-
-    void SaveTo(CoreSnapshot& snapshot);
-    void LoadFrom(CoreSnapshot& snapshot);
-
     // Note that while the FDC technically does support 4 drives, the DS1 (Drive Select 1)
     // pin is physically disconnected on the CPC, meaning only 2 drives can be supported.
     FDD _drives[2];
@@ -155,7 +144,7 @@ public:
     void Write(word addr, byte b);
 
 private:
-    signed char _readTimeout;
+    int8_t _readTimeout;
 
     byte _mainStatus;
     byte _data;
@@ -230,6 +219,14 @@ private:
     friend StreamWriter& operator<<(StreamWriter& s, const Phase& fdc);
     friend StreamReader& operator>>(StreamReader& s, Phase& fdc);
 
-    friend std::ostream& operator<<(std::ostream& s, const FDC& fdc);
+    friend std::ostringstream& operator<<(std::ostringstream& s, const FDC& fdc);
+
+    friend uint64_t SerializeSize(const FDC& fdc);
+    friend void SerializeWrite(byte*& p, const FDC& fdc);
+    friend void SerializeRead(byte*& p, FDC& fdc);
+
+    friend uint64_t SerializeSize(const Phase& phase);
+    friend void SerializeWrite(byte*& p, const Phase& phase);
+    friend void SerializeRead(byte*& p, Phase& phase);
 };
 

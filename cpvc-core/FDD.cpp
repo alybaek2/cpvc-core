@@ -295,7 +295,7 @@ StreamReader& operator>>(StreamReader& s, FDD& fdd)
     return s;
 }
 
-std::ostream& operator<<(std::ostream& s, const FDD& fdd)
+std::ostringstream& operator<<(std::ostringstream& s, const FDD& fdd)
 {
     s << "FDD: Current sector: " << (int)fdd._currentSector << std::endl;
     s << "FDD: Current track: " << (int)fdd._currentTrack << std::endl;

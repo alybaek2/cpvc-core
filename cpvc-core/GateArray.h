@@ -13,15 +13,6 @@ public:
     GateArray(Memory& memory, bool& interruptRequested, byte& scanLineCount);
     ~GateArray();
 
-    void CopyFrom(const GateArray& gateArray)
-    {
-        _selectedPen = gateArray._selectedPen;
-        memcpy(_pen, gateArray._pen, sizeof(_pen));
-        _border = gateArray._border;
-        _mode = gateArray._mode;
-        memcpy(_renderedPenBytes, gateArray._renderedPenBytes, sizeof(_renderedPenBytes));
-    }
-
     Memory& _memory;
     byte _selectedPen;
     byte _pen[16];
@@ -42,5 +33,9 @@ public:
     friend StreamWriter& operator<<(StreamWriter& s, const GateArray& gateArray);
     friend StreamReader& operator>>(StreamReader& s, GateArray& gateArray);
 
-    friend std::ostream& operator<<(std::ostream& s, const GateArray& gateArray);
+    friend uint64_t SerializeSize(const GateArray& gateArray);
+    friend void SerializeWrite(byte*& p, const GateArray& gateArray);
+    friend void SerializeRead(byte*& p, GateArray& gateArray);
+
+    friend std::ostringstream& operator<<(std::ostringstream& s, const GateArray& gateArray);
 };

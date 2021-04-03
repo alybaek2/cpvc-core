@@ -4,28 +4,20 @@
 #include "Encode.h"
 
 /// <summary>
-/// Template class that can be used to serialize simple types; specifically, types that
-/// are stored entirely in a contiguous block of memory. Basically, the type must contain
-/// no pointers or references.
+/// Class for storing a blob.
 /// </summary>
 /// <remarks>
 /// By default, this class will store a single instance of T. The consturctor taking
 /// <c>size</c> can be used to store multiple instances in one contiguous block.
 /// </remarks>
-/// <typeparam name="T">Type the class will serialize</typeparam>
-template <class T>
 class Blob
 {
 public:
-    /// <summary>
-    /// Constructor that stores the specified number of instances of <c>T</c>.
-    /// </summary>
-    /// <param name="count">The number of instances of <c>T</c> to store.</param>
-    Blob(size_t count = 0)
+    Blob()
     {
         std::unique_ptr<bytevector> pBytes(nullptr);
         Init(pBytes);
-        SetCount(count);
+        SetCount(0);
     }
 
     Blob(std::unique_ptr<bytevector>& pBytes)
@@ -33,33 +25,18 @@ public:
         Init(pBytes);
     }
 
-    Blob(size_t count, std::unique_ptr<bytevector>& pBytes)
-    {
-        Init(pBytes);
-        SetCount(count);
-        Clear();
-    }
-
     ~Blob()
     {
     }
 
     /// <summary>
-    /// Casting operator that retrieves the first instance of <c>T</c> as a reference.
+    /// Updates the internal representation of the blob to a "diff" with respect to another
+    /// Blob object. Depending on how similar to the two Blobs are, this will result in less
+    /// memory being used to store this Blob.
     /// </summary>
-    operator T& ()
-    {
-        return *((T*)Data());
-    }
-
-    /// <summary>
-    /// If another object of the same type is suspected to have a similar serialization to the
-    /// current set of objects, then this method will update its internal storage to reference
-    /// the other object and (hopefully) save space.
-    /// </summary>
-    /// <param name="parentBlob">Smart pointer to the other object with a similar serialization.</param>
-    /// <returns>A std::unique_ptr<bytevector> of the storage that was being used to store the full, uncompressed object.</returns>
-    std::unique_ptr<bytevector> SetDiffParent(std::shared_ptr<Blob<T>>& parentBlob)
+    /// <param name="parentBlob">Smart pointer to another Blob.</param>
+    /// <returns>A std::unique_ptr<bytevector> of the storage that was previously being used to store the full, uncompressed object.</returns>
+    std::unique_ptr<bytevector> SetDiffParent(std::shared_ptr<Blob>& parentBlob)
     {
         PopulateBytes();
 
@@ -109,15 +86,13 @@ public:
     {
         if (_pBytes != nullptr)
         {
-            size_t newSize = sizeof(T) * newCount;
-            _pBytes->resize(newSize);
+            _pBytes->resize(newCount);
         }
     }
 
 private:
     void Init(std::unique_ptr<bytevector>& pBytes)
     {
-
         if (pBytes == nullptr)
         {
             _pBytes = std::make_unique<bytevector>(0);
@@ -168,6 +143,6 @@ private:
     std::unique_ptr<bytevector> _pBytes;
 
     // Members for when storing as a diff between this object and another.
-    std::shared_ptr<Blob<T>> _parentBlob;
+    std::shared_ptr<Blob> _parentBlob;
     std::unique_ptr<bytevector> _pEncodedDiffBytes;
 };

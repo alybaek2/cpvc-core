@@ -88,14 +88,14 @@ namespace CPvC {
             _pCore->Reset();
         }
 
-        void SetScreen(IntPtr pBuffer, UInt16 pitch, UInt16 height, UInt16 width)
+        void SetScreen(UInt16 pitch, UInt16 height, UInt16 width)
         {
-            _pCore->SetScreen((byte*)pBuffer.ToPointer(), pitch, height, width);
+            _pCore->SetScreen(pitch, height, width);
         }
 
-        IntPtr GetScreen()
+        void CopyScreen(IntPtr pBuffer, UInt64 size)
         {
-            return (IntPtr)_pCore->GetScreen();
+            _pCore->CopyScreen((byte*)pBuffer.ToPointer(), size);
         }
 
         bool KeyPress(byte keycode, bool down)

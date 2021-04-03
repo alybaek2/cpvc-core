@@ -55,8 +55,8 @@ public:
     void LoadTape(const byte* pBuffer, int size);
     void LoadDisc(byte drive, const byte* pBuffer, int size);
 
-    void SetScreen(byte* pBuffer, word pitch, word height, word width);
-    byte* GetScreen();
+    void SetScreen(word pitch, word height, word width);
+    void CopyScreen(byte* pBuffer, size_t size);
 
     void SetFrequency(dword frequency);
 
@@ -101,8 +101,11 @@ public:
     friend StreamWriter& operator<<(StreamWriter& s, const Core& core);
     friend StreamReader& operator>>(StreamReader& s, Core& core);
 
-    friend std::ostream& operator<<(std::ostream& s, const Core& core);
+    friend std::ostringstream& operator<<(std::ostringstream& s, const Core& core);
 
+    friend uint64_t SerializeSize(const Core& core);
+    friend void SerializeWrite(byte*& p, const Core& core);
+    friend void SerializeRead(byte*& p, Core& core);
 private:
     // Hardware components.
     Memory _memory;
@@ -156,11 +159,9 @@ private:
     bool HandleInterrupt();
 
     // Screen buffer.
-    byte* _pScreen;
     word _scrPitch;
     word _scrHeight;
     word _scrWidth;
-
     bytevector _screen;
 
     wordvector* _pAudioSamples;

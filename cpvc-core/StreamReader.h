@@ -16,13 +16,16 @@ public:
 
     StreamReader(const StreamWriter& writer) : StreamReader()
     {
-        bytevector blob;
-        blob.resize(writer.Size());
-        writer.CopyTo(blob.data(), blob.size());
-        for (byte b : blob)
-        {
-            Push(b);
-        }
+        _buffer.resize(writer.Size());
+        writer.CopyTo(_buffer.data(), _buffer.size());
+
+        //bytevector blob;
+        //blob.resize(writer.Size());
+        //writer.CopyTo(blob.data(), blob.size());
+        //for (byte b : blob)
+        //{
+        //    Push(b);
+        //}
     }
 
     ~StreamReader()
@@ -142,6 +145,60 @@ public:
         {
             (*this) >> pArray[x];
         }
+    }
+
+    inline void ReadSimple(byte*& p, bool& b)
+    {
+        bool* pw = reinterpret_cast<bool*>(p);
+        b = *pw;
+        p += sizeof(b);
+    }
+
+    inline void ReadSimple(byte*& p, byte& b)
+    {
+        b = *p;
+        p += sizeof(b);
+    }
+
+    inline void ReadSimple(byte*& p, word& w)
+    {
+        word* pw = reinterpret_cast<word*>(p);
+        w = *pw;
+        p += sizeof(w);
+    }
+
+    inline void ReadSimple(byte*& p, dword& d)
+    {
+        dword* pd = reinterpret_cast<dword*>(p);
+        d = *pd;
+        p += sizeof(d);
+    }
+
+    inline void ReadSimple(byte*& p, qword& w)
+    {
+        qword* pq = reinterpret_cast<qword*>(p);
+        w = *pq;
+        p += sizeof(w);
+    }
+
+    template<typename X, typename... Args>
+    inline void ReadSimple(byte*& p, X& x, Args&... args)
+    {
+        ReadSimple(p, x);
+        ReadSimple(p, args...);
+    }
+
+    template<typename X, typename... Args>
+    inline void ReadSimple(X& x, Args&... args)
+    {
+        size_t s = ArgsSize(x, args...);
+
+        byte* p = _buffer.data() + _bufferIndex;
+
+        ReadSimple(p, x);
+        ReadSimple(p, args...);
+
+        _bufferIndex += s;
     }
 
 private:

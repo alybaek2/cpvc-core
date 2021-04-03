@@ -141,7 +141,16 @@ StreamReader& operator>>(StreamReader& s, Keyboard& keyboard)
 
 std::ostream& operator<<(std::ostream& s, const Keyboard& keyboard)
 {
-    s << "Keyboard: Matrix: " << StringifyByteArray(keyboard._matrixClash) << std::endl;
+    s << keyboard._matrix;
+    s << keyboard._matrixClash;
+    s << keyboard._selectedLine;
+
+    return s;
+}
+
+std::ostringstream& operator<<(std::ostringstream& s, const Keyboard& keyboard)
+{
+    s << "Keyboard: Matrix: " << StringifyByteArray(keyboard._matrix) << std::endl;
     s << "Keyboard: Matrix clash: " << StringifyByteArray(keyboard._matrixClash) << std::endl;
     s << "Keyboard: Selected line: " << (int)keyboard._selectedLine << std::endl;
 

@@ -8,7 +8,13 @@
 #include "StreamReader.h"
 #include "StreamWriter.h"
 
-typedef std::array<byte, 0x4000> Mem16k;
+//typedef std::array<byte, 0x4000> Mem16k;
+//class Mem16k : public std::array<byte, 0x4000>
+//{
+//
+//};
+//typedef std::array<byte, 0x4000> Mem16k;
+using Mem16k = std::array<byte, 0x4000>;
 
 inline Mem16k CreateMem16k(byte* pBuffer)
 {
@@ -17,6 +23,36 @@ inline Mem16k CreateMem16k(byte* pBuffer)
 
     return mem;
 }
+
+//inline void SerializeWrite(byte*& p, const Mem16k& mem16k)
+//{
+//    memcpy(p, mem16k.data(), mem16k.size());
+//    p += mem16k.size();
+//}
+
+
+
+
+/// NOTE TO SELF!
+// The reason core.cpp compiles but memory.cpp doesn't is due to memory.cpp not including enough of the SerializeWrite functions?
+//
+
+
+//inline void SerializeWrite(byte*& p, const std::array<byte, 0x4000>& mem16k)
+//{
+//    memcpy(p, mem16k.data(), mem16k.size());
+//    p += mem16k.size();
+//}
+
+//template <int S>
+//void SerializeWrite(byte*& p, const Mem16k(&ma)[S])
+//{
+//    for (const Mem16k& mem16k : ma)
+//    {
+//        SerializeWrite(p, mem16k);
+//    }
+//}
+
 
 struct CoreSnapshot;
 struct SnapshotZ80Mem;
@@ -34,41 +70,6 @@ public:
     };
 
     ~Memory() {};
-
-    void CopyFrom(const Memory& memory, bool skipBanks = false)
-    {
-        for (int i = 0; i < 8; i++)
-        {
-            _banks[i] = memory._banks[i];
-        }
-
-        _ramConfig = memory._ramConfig;
-        _lowerRomEnabled = memory._lowerRomEnabled;
-        _lowerRom = memory._lowerRom;
-        _upperRomEnabled = memory._upperRomEnabled;
-        _upperRom = memory._upperRom;
-        _selectedUpperRom = memory._selectedUpperRom;
-
-        _roms.clear();
-        for (std::pair<byte, Mem16k> x : memory._roms)
-        {
-            _roms[x.first] = x.second;
-        }
-
-        _romIds.clear();
-        for (std::pair<byte, int> x : memory._romIds)
-        {
-            _romIds[x.first] = x.second;
-        }
-
-        ConfigureRAM();
-    }
-
-    void SaveTo(SnapshotZ80Mem& snapshot);
-    void LoadFrom(SnapshotZ80Mem& snapshot);
-
-    void SaveTo(Snapshot2nd64kAndRoms& snapshot);
-    void LoadFrom(Snapshot2nd64kAndRoms& snapshot);
 
     // ROM cache
     static int _nextRomId;
@@ -255,7 +256,7 @@ public:
         return s;
     }
 
-    friend std::ostream& operator<<(std::ostream& s, const Memory& memory)
+    friend std::ostringstream& operator<<(std::ostringstream& s, const Memory& memory)
     {
         for (const Mem16k bank : memory._banks)
         {
@@ -277,5 +278,32 @@ public:
 
         return s;
     }
+
+    friend uint64_t SerializeSize(const Memory& memory);
+    friend void SerializeWrite(byte*& p, const Memory& memory);
+    friend void SerializeRead(byte*& p, Memory& memory);
 };
 
+/*
+inline void SerializeWrite(byte*& p, const Memory& memory)
+{
+    //SerializeWrite(p,
+    //    memory._banks,
+    //    memory._ramConfig,
+    //    memory._lowerRomEnabled,
+    //    memory._upperRomEnabled,
+    //    memory._selectedUpperRom,
+    //    memory._lowerRom //,
+    //    //memory._roms
+    //);
+    SerializeWrite(p,
+        //memory._banks,
+        memory._ramConfig,
+        memory._lowerRomEnabled,
+        memory._upperRomEnabled,
+        memory._selectedUpperRom,
+        memory._lowerRom //,
+        //memory._roms
+    );
+}
+*/

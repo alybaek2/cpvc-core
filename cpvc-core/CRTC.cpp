@@ -298,3 +298,25 @@ StreamReader& operator>>(StreamReader& s, CRTC& crtc)
 
     return s;
 }
+
+std::ostringstream& operator<<(std::ostringstream& s, const CRTC& crtc)
+{
+    s << "CRTC: x: " << (int)crtc._x << std::endl;
+    s << "CRTC: y: " << (int)crtc._y << std::endl;
+    s << "CRTC: Horizontal count: " << (int)crtc._hCount << std::endl;
+    s << "CRTC: Vertical count: " << (int)crtc._vCount << std::endl;
+    s << "CRTC: Raster: " << (int)crtc._raster << std::endl;
+    s << "CRTC: In HSync: " << (int)crtc._inHSync << std::endl;
+    s << "CRTC: HSync count: " << (int)crtc._hSyncCount << std::endl;
+    s << "CRTC: In VSync: " << (int)crtc._inVSync << std::endl;
+    s << "CRTC: VSync count: " << (int)crtc._vSyncCount << std::endl;
+    s << "CRTC: In Vertical Total Adjust: " << (int)crtc._inVTotalAdjust << std::endl;
+    s << "CRTC: Vertical Total Adjust count: " << (int)crtc._vTotalAdjustCount << std::endl;
+    s << "CRTC: Scan line count: " << (int)crtc._scanLineCount << std::endl;
+    s << "CRTC: VSync delay: " << (int)crtc._vSyncDelay << std::endl;
+    s << "CRTC: Memory address: " << crtc._memoryAddress << std::endl;
+    s << "CRTC: Registers: " << StringifyByteArray(crtc._register) << std::endl;
+    s << "CRTC: elected register: " << crtc._selectedRegister << std::endl;
+
+    return s;
+}
