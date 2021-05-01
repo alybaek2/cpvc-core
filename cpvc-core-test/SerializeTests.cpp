@@ -1,4 +1,5 @@
 #include "gtest/gtest.h"
+#include <vector>
 #include "../cpvc-core/Serialize.h"
 
 TEST(SerializeTests, WriteArray)
@@ -70,4 +71,62 @@ TEST(SerializeTests, WriteMap)
     ASSERT_EQ(0, memcmp(expected, b.data(), b.size()));
 }
 
+template <typename T, int S>
+void TestWriteAndRead(const T(&values)[S])
+{
+    for (const T& write : values)
+    {
+        // Setup
+        bytevector serialized;
 
+        // Make sure what we read back is initailly different from what we expect.
+        T read = (write ^ ((T)-1));
+
+        // Act
+        Serialize::Write(serialized, write);
+        Serialize::Read(serialized, read);
+
+        // Verify
+        ASSERT_EQ(write, read);
+    }
+}
+
+TEST(SerializeTests, Bool)
+{
+    TestWriteAndRead({ false, true });
+}
+
+TEST(SerializeTests, Char)
+{
+    TestWriteAndRead<char>({ 'a', '\n', '9' });
+}
+
+TEST(SerializeTests, Byte)
+{
+    TestWriteAndRead<byte>({ 0x00, 0x0f, 0xf0, 0xff });
+}
+
+TEST(SerializeTests, Offset)
+{
+    TestWriteAndRead<offset>({ 0, -1, 1, 127, -128 });
+}
+
+TEST(SerializeTests, Word)
+{
+    TestWriteAndRead<word>({ 0x0000, 0x0f0f, 0xf0f0, 0xffff });
+}
+
+TEST(SerializeTests, Int)
+{
+    TestWriteAndRead<int>({ 0, -1, 1234567890 });
+}
+
+TEST(SerializeTests, Dword)
+{
+    TestWriteAndRead<dword>({ 0, 0x01234567, 0xffffffff });
+}
+
+TEST(SerializeTests, Qword)
+{
+    TestWriteAndRead<qword>({ 0, 0x0123456789abcdef, 0xffffffffffffffff });
+}
