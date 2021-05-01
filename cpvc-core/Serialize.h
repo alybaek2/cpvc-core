@@ -37,7 +37,7 @@ __forceinline void SerializeRead(byte*& p, T& t) \
 
 SERIALIZE_BASETYPE(bool)
 SERIALIZE_BASETYPE(char)
-SERIALIZE_BASETYPE(int8_t)
+SERIALIZE_BASETYPE(offset)
 SERIALIZE_BASETYPE(int)
 SERIALIZE_BASETYPE(byte)
 SERIALIZE_BASETYPE(word)
@@ -210,14 +210,46 @@ SERIALIZE(Keyboard,
     t._matrixClash,
     t._selectedLine)
 
-SERIALIZE(Memory,
-    t._banks,
-    t._ramConfig,
-    t._lowerRomEnabled,
-    t._upperRomEnabled,
-    t._selectedUpperRom,
-    t._lowerRom,
-    t._roms)
+
+__forceinline uint64_t SerializeSize(const Memory& t)
+{
+    return SerializeSize(
+        t._banks,
+        t._ramConfig,
+        t._lowerRomEnabled,
+        t._upperRomEnabled,
+        t._selectedUpperRom,
+        t._lowerRom,
+        t._roms);
+}
+
+__forceinline void SerializeWrite(byte*& p, const Memory& t)
+{
+    SerializeWrite(
+        p,
+        t._banks,
+        t._ramConfig,
+        t._lowerRomEnabled,
+        t._upperRomEnabled,
+        t._selectedUpperRom,
+        t._lowerRom,
+        t._roms);
+}
+
+__forceinline void SerializeRead(byte*& p, Memory& t)
+{
+    SerializeRead(
+        p,
+        t._banks,
+        t._ramConfig,
+        t._lowerRomEnabled,
+        t._upperRomEnabled,
+        t._selectedUpperRom,
+        t._lowerRom,
+        t._roms);
+
+    t.ConfigureRAM();
+}
 
 SERIALIZE(CRTC,
     t._x,
@@ -442,4 +474,4 @@ public:
         byte* p = bv.data();
         SerializeRead(p, args...);
     }
-    };
+};

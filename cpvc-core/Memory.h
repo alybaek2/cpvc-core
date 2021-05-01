@@ -55,8 +55,6 @@ inline Mem16k CreateMem16k(byte* pBuffer)
 
 
 struct CoreSnapshot;
-struct SnapshotZ80Mem;
-struct Snapshot2nd64kAndRoms;
 
 class Memory
 {
