@@ -211,44 +211,30 @@ SERIALIZE(Keyboard,
     t._selectedLine)
 
 
-__forceinline uint64_t SerializeSize(const Memory& t)
+#define SERIALIZE_MEMORY_ARGS \
+    memory._banks, \
+    memory._ramConfig, \
+    memory._lowerRomEnabled, \
+    memory._upperRomEnabled, \
+    memory._selectedUpperRom, \
+    memory._lowerRom, \
+    memory._roms
+
+__forceinline uint64_t SerializeSize(const Memory& memory)
 {
-    return SerializeSize(
-        t._banks,
-        t._ramConfig,
-        t._lowerRomEnabled,
-        t._upperRomEnabled,
-        t._selectedUpperRom,
-        t._lowerRom,
-        t._roms);
+    return SerializeSize(SERIALIZE_MEMORY_ARGS);
 }
 
-__forceinline void SerializeWrite(byte*& p, const Memory& t)
+__forceinline void SerializeWrite(byte*& p, const Memory& memory)
 {
-    SerializeWrite(
-        p,
-        t._banks,
-        t._ramConfig,
-        t._lowerRomEnabled,
-        t._upperRomEnabled,
-        t._selectedUpperRom,
-        t._lowerRom,
-        t._roms);
+    SerializeWrite(p, SERIALIZE_MEMORY_ARGS);
 }
 
-__forceinline void SerializeRead(byte*& p, Memory& t)
+__forceinline void SerializeRead(byte*& p, Memory& memory)
 {
-    SerializeRead(
-        p,
-        t._banks,
-        t._ramConfig,
-        t._lowerRomEnabled,
-        t._upperRomEnabled,
-        t._selectedUpperRom,
-        t._lowerRom,
-        t._roms);
+    SerializeRead(p, SERIALIZE_MEMORY_ARGS);
 
-    t.ConfigureRAM();
+    memory.ConfigureRAM();
 }
 
 SERIALIZE(CRTC,
