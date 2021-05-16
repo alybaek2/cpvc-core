@@ -3,8 +3,12 @@
 #include "common.h"
 #include "stringify.h"
 
+#include "Serialize.h"
+
 #include "StreamReader.h"
 #include "StreamWriter.h"
+
+#include "BlockPhase.h"
 
 // Macro for adjusting T-State values. Values in .CDT file are for
 // a 3.5MHz clock, whereas we're using a 4MHz clock.
@@ -60,6 +64,9 @@ struct DataBlock
     dword _length;
 };
 
+StreamWriter& operator<<(StreamWriter& s, const BlockPhase& phase);
+StreamReader& operator>>(StreamReader& s, BlockPhase& phase);
+
 class Tape
 {
 public:
@@ -78,20 +85,36 @@ public:
 
     bytevector _buffer;
 
+    SERIALIZE_MEMBERS(
+        _currentBlockIndex,
+        _blockIndex,
+        _phase,
+        _pulsesRemaining,
+        _dataIndex,
+        _levelChanged,
+        _dataByte,
+        _remainingBits,
+        _pulseIndex,
+        _pause,
+        _dataBlock._zeroLength,
+        _dataBlock._oneLength,
+        _dataBlock._usedBitsLastByte,
+        _dataBlock._pause,
+        _dataBlock._length,
+        _speedBlock._pilotPulseLength,
+        _speedBlock._sync1Length,
+        _speedBlock._sync2Length,
+        _speedBlock._pilotPulseCount,
+        _playing,
+        _level,
+        _motor,
+        _tickPos,
+        _ticksToNextLevelChange,
+        _buffer,
+        _hasTape)
+
 private:
     bool _hasTape;
-
-    enum BlockPhase
-    {
-        Start,
-        Pilot,
-        SyncOne,
-        SyncTwo,
-        Data,
-        Pause,
-        PauseZero,
-        End
-    };
 
     // Parsing members...
     int _currentBlockIndex;
@@ -131,17 +154,5 @@ private:
     friend StreamWriter& operator<<(StreamWriter& s, const Tape& tape);
     friend StreamReader& operator>>(StreamReader& s, Tape& tape);
 
-    friend StreamWriter& operator<<(StreamWriter& s, const Tape::BlockPhase& phase);
-    friend StreamReader& operator>>(StreamReader& s, Tape::BlockPhase& phase);
-
     friend std::ostringstream& operator<<(std::ostringstream& s, const Tape& tape);
-
-    friend uint64_t SerializeSize(const Tape& tape);
-    friend void SerializeWrite(byte*& p, const Tape& tape);
-    friend void SerializeRead(byte*& p, Tape& tape);
-
-    friend uint64_t SerializeSize(const BlockPhase& phase);
-    friend void SerializeWrite(byte*& p, const BlockPhase& phase);
-    friend void SerializeRead(byte*& p, BlockPhase& phase);
 };
-

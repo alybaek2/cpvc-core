@@ -8,12 +8,8 @@
 #include "StreamReader.h"
 #include "StreamWriter.h"
 
-//typedef std::array<byte, 0x4000> Mem16k;
-//class Mem16k : public std::array<byte, 0x4000>
-//{
-//
-//};
-//typedef std::array<byte, 0x4000> Mem16k;
+#include "Serialize.h"
+
 using Mem16k = std::array<byte, 0x4000>;
 
 inline Mem16k CreateMem16k(byte* pBuffer)
@@ -23,38 +19,6 @@ inline Mem16k CreateMem16k(byte* pBuffer)
 
     return mem;
 }
-
-//inline void SerializeWrite(byte*& p, const Mem16k& mem16k)
-//{
-//    memcpy(p, mem16k.data(), mem16k.size());
-//    p += mem16k.size();
-//}
-
-
-
-
-/// NOTE TO SELF!
-// The reason core.cpp compiles but memory.cpp doesn't is due to memory.cpp not including enough of the SerializeWrite functions?
-//
-
-
-//inline void SerializeWrite(byte*& p, const std::array<byte, 0x4000>& mem16k)
-//{
-//    memcpy(p, mem16k.data(), mem16k.size());
-//    p += mem16k.size();
-//}
-
-//template <int S>
-//void SerializeWrite(byte*& p, const Mem16k(&ma)[S])
-//{
-//    for (const Mem16k& mem16k : ma)
-//    {
-//        SerializeWrite(p, mem16k);
-//    }
-//}
-
-
-struct CoreSnapshot;
 
 class Memory
 {
@@ -234,7 +198,6 @@ public:
         s >> memory._lowerRom;
         s >> memory._roms;
 
-
         // Cache roms...
         memory._lowerRomId = Memory::GetRomId(memory._lowerRom);
 
@@ -277,31 +240,15 @@ public:
         return s;
     }
 
-    friend uint64_t SerializeSize(const Memory& memory);
-    friend void SerializeWrite(byte*& p, const Memory& memory);
-    friend void SerializeRead(byte*& p, Memory& memory);
-};
+    SERIALIZE_MEMBERS_WITH_POSTREAD(
+        _banks,
+        _ramConfig,
+        _lowerRomEnabled,
+        _upperRomEnabled,
+        _selectedUpperRom,
+        _lowerRom,
+        _roms);
 
-/*
-inline void SerializeWrite(byte*& p, const Memory& memory)
-{
-    //SerializeWrite(p,
-    //    memory._banks,
-    //    memory._ramConfig,
-    //    memory._lowerRomEnabled,
-    //    memory._upperRomEnabled,
-    //    memory._selectedUpperRom,
-    //    memory._lowerRom //,
-    //    //memory._roms
-    //);
-    SerializeWrite(p,
-        //memory._banks,
-        memory._ramConfig,
-        memory._lowerRomEnabled,
-        memory._upperRomEnabled,
-        memory._selectedUpperRom,
-        memory._lowerRom //,
-        //memory._roms
-    );
-}
-*/
+    void SerializePostRead() { ConfigureRAM(); }
+
+};

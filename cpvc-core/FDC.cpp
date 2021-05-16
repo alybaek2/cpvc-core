@@ -1,5 +1,5 @@
 #include "FDC.h"
-#include "CoreSnapshot.h"
+//#include "CoreSnapshot.h"
 
 FDC::FDC()
 {
@@ -382,7 +382,7 @@ void FDC::SetDataDirection(byte direction)
     _mainStatus = (_mainStatus & ~0x40) | ((_dataDirection == fdcDataOut) ? 0x40 : 0x00);
 }
 
-void FDC::SetPhase(FDC::Phase p)
+void FDC::SetPhase(Phase p)
 {
     _phase = p;
 
@@ -570,7 +570,7 @@ void FDC::CmdReadData()
     byte& gapLength = _commandBytes[7];
     byte& dataLength = _commandBytes[8];
 
-    if (!CurrentDrive()._hasDisk)
+    if (!CurrentDrive().HasDisk())
     {
         SetPhase(phResult);
 
@@ -645,7 +645,7 @@ void FDC::CmdWriteData()
     byte& gapLength = _commandBytes[7];
     byte& dataLength = _commandBytes[8];
 
-    if (!CurrentDrive()._hasDisk)
+    if (!CurrentDrive().HasDisk())
     {
         SetPhase(phResult);
 
@@ -890,6 +890,20 @@ void FDC::CmdSenseDriveStatus()
     SetPhase(phResult);
 }
 
+StreamWriter& operator<<(StreamWriter& s, const Phase& phase)
+{
+    s << (int)phase;
+
+    return s;
+}
+
+StreamReader& operator>>(StreamReader& s, Phase& phase)
+{
+    s >> (int&)phase;
+
+    return s;
+}
+
 StreamWriter& operator<<(StreamWriter& s, const FDC& fdc)
 {
     s << fdc._drives;
@@ -960,20 +974,6 @@ StreamReader& operator>>(StreamReader& s, FDC& fdc)
     s >> fdc._nonDmaMode;
     s >> fdc._readBuffer;
     s >> fdc._readBufferIndex;
-
-    return s;
-}
-
-StreamWriter& operator<<(StreamWriter& s, const FDC::Phase& phase)
-{
-    s << (int) phase;
-
-    return s;
-}
-
-StreamReader& operator>>(StreamReader& s, FDC::Phase& phase)
-{
-    s >> (int&) phase;
 
     return s;
 }

@@ -4,6 +4,8 @@
 #include "Keyboard.h"
 #include "IPSG.h"
 
+#include "Serialize.h"
+
 class PSG : public IPSG
 {
 public:
@@ -19,6 +21,23 @@ public:
     void SetControl(bool bdir, bool bc1);
     bool Bc1();
     bool Bdir();
+
+    SERIALIZE_MEMBERS(
+        _bdir,
+        _bc1,
+        _selectedRegister,
+        _register,
+        _toneTicks,
+        _state,
+        _noiseTicks,
+        _noiseAmplitude,
+        _noiseRandom,
+        _envelopeTickCounter,
+        _envelopeStepCount,
+        _envelopePeriodCount,
+        _envelopeState,
+        _noiseTickCounter,
+        _envelopeStepState)
 
 private:
     bool _bdir;
@@ -72,10 +91,6 @@ private:
 
     friend StreamWriter& operator<<(StreamWriter& s, const PSG& psg);
     friend StreamReader& operator>>(StreamReader& s, PSG& psg);
-
-    friend uint64_t SerializeSize(const PSG& psg);
-    friend void SerializeWrite(byte*& p, const PSG& psg);
-    friend void SerializeRead(byte*& p, PSG& psg);
 
     friend std::ostringstream& operator<<(std::ostringstream& s, const PSG& psg);
 };

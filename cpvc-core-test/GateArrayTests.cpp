@@ -95,3 +95,20 @@ TEST(GateArrayTests, Serialize)
     ArraysEqual(pGateArray->_renderedPenBytes, pGateArray2->_renderedPenBytes);
 }
 
+TEST(GateArrayTests, Serialize2)
+{
+    // Setup
+    bool interruptRequested;
+    byte scanLineCount;
+    Memory memory;
+    std::unique_ptr<GateArray> pGateArray = std::make_unique<GateArray>(memory, interruptRequested, scanLineCount);
+    //GateArray gateArray = GateArray(memory, interruptRequested, scanLineCount);
+
+    // Act
+    Blob blob;
+    Serialize::Write(blob, *pGateArray);
+
+    // Verify
+
+
+}

@@ -103,9 +103,44 @@ public:
 
     friend std::ostringstream& operator<<(std::ostringstream& s, const Core& core);
 
-    friend uint64_t SerializeSize(const Core& core);
-    friend void SerializeWrite(byte*& p, const Core& core);
-    friend void SerializeRead(byte*& p, Core& core);
+    SERIALIZE_MEMBERS(
+        AF,
+        BC,
+        DE,
+        HL,
+        IR,
+        AF_,
+        BC_,
+        DE_,
+        HL_,
+        IX,
+        IY,
+        PC,
+        SP,
+        _iff1,
+        _iff2,
+        _interruptRequested,
+        _interruptMode,
+        _eiDelay,
+        _halted,
+        _keyboard,
+        _crtc,
+        _psg,
+        _ppi,
+        _gateArray,
+        _ticks,
+        _frequency,
+        _audioTickTotal,
+        _audioTicksToNextSample,
+        _audioSampleCount,
+        _scrHeight,
+        _scrPitch,
+        _memory,
+        _fdc,
+        _tape,
+        _screen)
+
+
 private:
     // Hardware components.
     Memory _memory;

@@ -87,6 +87,12 @@
     <ClInclude Include="Serialize.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Phase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BlockPhase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PSG.cpp">

@@ -5,6 +5,8 @@
 #include "IBus.h"
 #include "IPSG.h"
 
+#include "Serialize.h"
+
 class PPI : public IBus
 {
 public:
@@ -59,8 +61,16 @@ public:
     friend StreamWriter& operator<<(StreamWriter& s, const PPI& ppi);
     friend StreamReader& operator>>(StreamReader& s, PPI& ppi);
 
-    friend uint64_t SerializeSize(const PPI& ppi);
-    friend void SerializeWrite(byte*& p, const PPI& ppi);
-
     friend std::ostringstream& operator<<(std::ostringstream& s, const PPI& ppi);
+
+    SERIALIZE_MEMBERS(
+        _printerReady,
+        _exp,
+        _refreshRate,
+        _manufacturer,
+        _tapeWriteData,
+        _portA,
+        _portB,
+        _portC,
+        _control)
 };

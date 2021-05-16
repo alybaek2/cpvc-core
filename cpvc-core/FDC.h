@@ -5,6 +5,10 @@
 #include "FDD.h"
 #include "Disk.h"
 
+#include "Phase.h"
+
+#include "Serialize.h"
+
 struct CoreSnapshot;
 
 // Status bits
@@ -116,6 +120,10 @@ constexpr byte commandLengths[32] = {
     1
 };
 
+StreamWriter& operator<<(StreamWriter& s, const Phase& phase);
+StreamReader& operator>>(StreamReader& s, Phase& phase);
+
+
 constexpr byte readBufferSize = 4;
 
 // Class representing the floppy drive controller.
@@ -157,13 +165,6 @@ private:
     bool _seekCompleted[2];
     bool _statusChanged[2];
 
-    enum Phase
-    {
-        phCommand,
-        phExecute,
-        phResult
-    };
-
     Phase _phase;
     byte _commandBytes[100];
     byte _commandByteCount;
@@ -187,7 +188,7 @@ private:
     byte GetStatus() const;
     byte GetData();
     void SetDataDirection(byte direction);
-    void SetPhase(FDC::Phase p);
+    void SetPhase(Phase p);
     void SelectDrive(byte dsByte);
     FDD& CurrentDrive();
     void PushReadBuffer(byte data);
@@ -216,17 +217,34 @@ private:
     friend StreamWriter& operator<<(StreamWriter& s, const FDC& fdc);
     friend StreamReader& operator>>(StreamReader& s, FDC& fdc);
 
-    friend StreamWriter& operator<<(StreamWriter& s, const Phase& fdc);
-    friend StreamReader& operator>>(StreamReader& s, Phase& fdc);
-
     friend std::ostringstream& operator<<(std::ostringstream& s, const FDC& fdc);
 
-    friend uint64_t SerializeSize(const FDC& fdc);
-    friend void SerializeWrite(byte*& p, const FDC& fdc);
-    friend void SerializeRead(byte*& p, FDC& fdc);
-
-    friend uint64_t SerializeSize(const Phase& phase);
-    friend void SerializeWrite(byte*& p, const Phase& phase);
-    friend void SerializeRead(byte*& p, Phase& phase);
+public:
+    SERIALIZE_MEMBERS(
+        _drives,
+        _readTimeout,
+        _mainStatus,
+        _data,
+        _dataDirection,
+        _motor,
+        _currentDrive,
+        _currentHead,
+        _status,
+        _seekCompleted,
+        _statusChanged,
+        _phase,
+        _commandBytes,
+        _commandByteCount,
+        _execBytes,
+        _execByteCount,
+        _execIndex,
+        _resultBytes,
+        _resultByteCount,
+        _resultIndex,
+        _stepReadTime,
+        _headLoadTime,
+        _headUnloadTime,
+        _nonDmaMode,
+        _readBuffer,
+        _readBufferIndex)
 };
-

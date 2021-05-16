@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include <vector>
 #include "../cpvc-core/Serialize.h"
+#include "../cpvc-core/Keyboard.h"
 
 TEST(SerializeTests, WriteArray)
 {
@@ -129,4 +130,82 @@ TEST(SerializeTests, Dword)
 TEST(SerializeTests, Qword)
 {
     TestWriteAndRead<qword>({ 0, 0x0123456789abcdef, 0xffffffffffffffff });
+}
+
+TEST(SerializeTests, ByteVector)
+{
+    // Setup
+    bytevector bytes = { 0x01, 0x02, 0x03, 0x04 };
+    byte expected[] =
+    {
+        0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x01, 0x02, 0x03, 0x04
+    };
+
+    // Act
+    bytevector s;
+    Serialize::Write(s, bytes);
+
+    // Verify
+    ASSERT_EQ(sizeof(expected), s.size());
+    ASSERT_EQ(0, memcmp(expected, s.data(), s.size()));
+}
+
+TEST(SerializeTests, EmptyByteVector)
+{
+    // Setup
+    bytevector bytes = { };
+    byte expected[] =
+    {
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    };
+
+    // Act
+    bytevector s;
+    Serialize::Write(s, bytes);
+
+    // Verify
+    ASSERT_EQ(sizeof(expected), s.size());
+    ASSERT_EQ(0, memcmp(expected, s.data(), s.size()));
+}
+
+TEST(SerializeTests, WordArrayWrite)
+{
+    // Setup
+    word a[] = { 0x0123, 0x4567, 0x89ab, 0xcdef };
+    byte expected[] =
+    {
+        0x23, 0x01,
+        0x67, 0x45,
+        0xab, 0x89,
+        0xef, 0xcd
+    };
+
+    // Act
+    bytevector s;
+    Serialize::Write(s, a);
+
+    // Verify
+    ASSERT_EQ(sizeof(expected), s.size());
+    ASSERT_EQ(0, memcmp(expected, s.data(), s.size()));
+}
+
+TEST(SerializeTests, WordArrayRead)
+{
+    // Setup
+    word a[] = { 0, 0, 0, 0 };
+    word expected[] = { 0x0123, 0x4567, 0x89ab, 0xcdef };
+    bytevector s =
+    {
+        0x23, 0x01,
+        0x67, 0x45,
+        0xab, 0x89,
+        0xef, 0xcd
+    };
+
+    // Act
+    Serialize::Read(s, a);
+
+    // Verify
+    ASSERT_EQ(0, memcmp(expected, a, sizeof(a)));
 }

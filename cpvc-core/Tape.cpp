@@ -650,14 +650,14 @@ StreamReader& operator>>(StreamReader& s, Tape& tape)
     return s;
 }
 
-StreamWriter& operator<<(StreamWriter& s, const Tape::BlockPhase& phase)
+StreamWriter& operator<<(StreamWriter& s, const BlockPhase& phase)
 {
     s << (int) phase;
 
     return s;
 }
 
-StreamReader& operator>>(StreamReader& s, Tape::BlockPhase& phase)
+StreamReader& operator>>(StreamReader& s, BlockPhase& phase)
 {
     s >> (int&) phase;
 

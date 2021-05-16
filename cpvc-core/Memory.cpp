@@ -1,5 +1,5 @@
 #include "Memory.h"
-#include "CoreSnapshot.h"
+//#include "CoreSnapshot.h"
 
 int Memory::_nextRomId = 0;
 std::map<int, Mem16k> Memory::_romCache;

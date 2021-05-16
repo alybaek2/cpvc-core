@@ -7,6 +7,8 @@
 #include "StreamReader.h"
 #include "StreamWriter.h"
 
+#include "Serialize.h"
+
 class CRTC : public IBus
 {
 public:
@@ -62,6 +64,24 @@ public:
     byte& _lightPenAddressHigh = _register[16];
     byte& _lightPenAddressLow = _register[17];
 
+    SERIALIZE_MEMBERS(
+        _x,
+        _y,
+        _hCount,
+        _vCount,
+        _raster,
+        _inHSync,
+        _hSyncCount,
+        _inVSync,
+        _vSyncCount,
+        _inVTotalAdjust,
+        _vTotalAdjustCount,
+        _scanLineCount,
+        _vSyncDelay,
+        _memoryAddress,
+        _register,
+        _selectedRegister)
+
 private:
     byte _selectedRegister;
 
@@ -77,8 +97,4 @@ private:
     friend StreamReader& operator>>(StreamReader& s, CRTC& crtc);
 
     friend std::ostringstream& operator<<(std::ostringstream& s, const CRTC& crtc);
-
-    friend uint64_t SerializeSize(const CRTC& crtc);
-    friend void SerializeWrite(byte*& p, const CRTC& crtc);
-    friend void SerializeRead(byte*& p, CRTC& crtc);
 };

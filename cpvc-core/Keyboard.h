@@ -4,6 +4,7 @@
 #include "stringify.h"
 #include "StreamReader.h"
 #include "StreamWriter.h"
+#include "Serialize.h"
 
 class Keyboard
 {
@@ -18,6 +19,11 @@ public:
     void SelectLine(byte line);
     byte SelectedLine();
 
+    SERIALIZE_MEMBERS(
+        _matrix,
+        _matrixClash,
+        _selectedLine)
+
 private:
     constexpr static byte _lineCount = 10;
     byte _matrix[_lineCount];
@@ -26,10 +32,6 @@ private:
 
     void Clash();
     byte SetLineState(byte(&matrix)[_lineCount], byte line, byte bit, bool state);
-
-    friend uint64_t SerializeSize(const Keyboard& keyboard);
-    friend void SerializeWrite(byte*& p, const Keyboard& keyboard);
-    friend void SerializeRead(byte*& p, Keyboard& keyboard);
 
     friend StreamWriter& operator<<(StreamWriter& s, const Keyboard& keyboard);
     friend StreamReader& operator>>(StreamReader& s, Keyboard& keyboard);
