@@ -52,12 +52,12 @@ __forceinline static void Read(byte*& p, T& t, Args&... args) \
 }
 
 #define SERIALIZE_MEMBERS(...) \
-    __forceinline uint64_t SerializeSize() const {  return Serialize::Size(__VA_ARGS__); } \
+    __forceinline uint64_t SerializeSize() const { return Serialize::Size(__VA_ARGS__); } \
     __forceinline void SerializeWrite(byte*& p) const { Serialize::Write(p, __VA_ARGS__); } \
     __forceinline void SerializeRead(byte*& p) { Serialize::Read(p, __VA_ARGS__); }
 
 #define SERIALIZE_MEMBERS_WITH_POSTREAD(...) \
-    __forceinline uint64_t SerializeSize() const {  return Serialize::Size(__VA_ARGS__); } \
+    __forceinline uint64_t SerializeSize() const { return Serialize::Size(__VA_ARGS__); } \
     __forceinline void SerializeWrite(byte*& p) const { Serialize::Write(p, __VA_ARGS__); } \
     __forceinline void SerializeRead(byte*& p) { Serialize::Read(p, __VA_ARGS__); SerializePostRead(); }
 
