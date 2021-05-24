@@ -10,6 +10,8 @@
 
 #include "Serialize.h"
 
+using RomId = int;
+using RomSlot = byte;
 using Mem16k = std::array<byte, 0x4000>;
 
 inline Mem16k CreateMem16k(byte* pBuffer)
@@ -25,19 +27,22 @@ class Memory
 public:
     Memory()
     {
+        for (word r = 0; r < 256; r++)
+        {
+            _romIds[r] = emptyRomId;
+        }
+
         Reset();
 
-        _lowerRom.fill(0);
-        _upperRom.fill(0);
+        _lowerRom = emptyRom;
+        _upperRom = emptyRom;
     };
 
     ~Memory() {};
 
     // ROM cache
-    static int _nextRomId;
-    static std::map<int, Mem16k> _romCache;
     static int GetRomId(const Mem16k& rom);
-    static bool GetRom(int id, Mem16k& rom);
+    //static bool GetRom(int id, Mem16k& rom);
 
 private:
     Mem16k _banks[8];
@@ -58,14 +63,19 @@ private:
 
     bool _lowerRomEnabled;
     Mem16k _lowerRom;
-    int _lowerRomId;
+    RomId _lowerRomId;
 
     bool _upperRomEnabled;
     Mem16k _upperRom;
-    int _upperRomId;
+    RomId _upperRomId;
     byte _selectedUpperRom;
-    std::map<byte, Mem16k> _roms;
-    std::map<byte, int> _romIds;
+    RomId _romIds[256];
+
+    static int _nextRomId;
+    static std::map<int, Mem16k> _romCache;
+
+    static constexpr RomId emptyRomId = 0;
+    static const Mem16k emptyRom;
 
 public:
     void Reset()
@@ -112,20 +122,18 @@ public:
         ConfigureRAM();
     }
 
-    void SetUpperROM(byte slot, const Mem16k& rom)
+    void SetUpperROM(RomSlot slot, const Mem16k& rom)
     {
         _romIds[slot] = GetRomId(rom);
-        _roms[slot] = rom;
         if (_selectedUpperRom == slot)
         {
-            _upperRom = _roms[_selectedUpperRom];
+            _upperRom = rom;
         }
     }
 
-    void RemoveUpperROM(byte slot)
+    void RemoveUpperROM(RomSlot slot)
     {
-        _romIds.erase(slot);
-        _roms.erase(slot);
+        _romIds[slot] = emptyRomId;
     }
 
     void EnableUpperROM(bool enable)
@@ -134,20 +142,23 @@ public:
         ConfigureRAM();
     }
 
-    void SelectROM(byte rom)
+    void SelectROM(RomSlot slot)
     {
-        if (_roms.find(rom) == _roms.end())
+        RomId id = _romIds[slot];
+        if (id == emptyRomId)
         {
+            // Should we just leave _selectedUpperRom as it is in this case?
             _selectedUpperRom = 0;
-            if (_roms.find(0) == _roms.end())
+
+            if (_romIds[_selectedUpperRom] == emptyRomId)
             {
-                _upperRom.fill(0);
+                _upperRom = emptyRom;
             }
         }
         else
         {
-            _selectedUpperRom = rom;
-            _upperRom = _roms[rom];
+            _selectedUpperRom = slot;
+            _upperRom = _romCache[id];
         }
     }
 
@@ -183,7 +194,19 @@ public:
         s << memory._upperRomEnabled;
         s << memory._selectedUpperRom;
         s << memory._lowerRom;
-        s << memory._roms;
+
+        std::map<RomSlot, Mem16k> roms;
+        for (word i = 0; i < 256; i++)
+        {
+            RomSlot slot = static_cast<RomSlot>(i);
+            RomId romId = memory._romIds[slot];
+            if (romId != emptyRomId)
+            {
+                roms[slot] = Memory::_romCache[romId];
+            }
+        }
+
+        s << roms;
 
         return s;
     }
@@ -196,16 +219,23 @@ public:
         s >> memory._upperRomEnabled;
         s >> memory._selectedUpperRom;
         s >> memory._lowerRom;
-        s >> memory._roms;
+
+        std::map<RomSlot, Mem16k> roms;
+        s >> roms;
+
+        for (word i = 0; i < 256; i++)
+        {
+            RomSlot slot = static_cast<RomSlot>(i);
+            memory._romIds[slot] = emptyRomId;
+        }
+
+        for (const std::pair<RomSlot, Mem16k>& kv : roms)
+        {
+            memory._romIds[kv.first] = memory.GetRomId(kv.second);
+        }
 
         // Cache roms...
         memory._lowerRomId = Memory::GetRomId(memory._lowerRom);
-
-        memory._romIds.clear();
-        for (std::pair<byte, Mem16k> i : memory._roms)
-        {
-            memory._romIds[i.first] = Memory::GetRomId(memory._roms[i.first]);
-        }
 
         // Probably more consistent to serialize each read and write bank separately, as it's not
         // guaranteed that they will be in sync with _ramConfig, even though they should be!
@@ -232,11 +262,6 @@ public:
         s << (int)memory._selectedUpperRom << std::endl;
         s << "Lower rom: " << StringifyByteArray(memory._lowerRom) << std::endl;
         
-        for (std::pair<byte, Mem16k> x : memory._roms)
-        {
-            s << "Rom " << (int)x.first << ": " << StringifyByteArray(x.second) << std::endl;
-        }
-
         return s;
     }
 
@@ -246,9 +271,14 @@ public:
         _lowerRomEnabled,
         _upperRomEnabled,
         _selectedUpperRom,
-        _lowerRom,
-        _roms);
+        _lowerRomId,
+        _romIds);
 
-    void SerializePostRead() { ConfigureRAM(); }
+    void SerializePostRead()
+    {
+        _lowerRom = _romCache[_lowerRomId];
+        _upperRom = _romCache[_romIds[_selectedUpperRom]];
 
+        ConfigureRAM();
+    }
 };

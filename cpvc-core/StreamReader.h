@@ -18,14 +18,6 @@ public:
     {
         _buffer.resize(writer.Size());
         writer.CopyTo(_buffer.data(), _buffer.size());
-
-        //bytevector blob;
-        //blob.resize(writer.Size());
-        //writer.CopyTo(blob.data(), blob.size());
-        //for (byte b : blob)
-        //{
-        //    Push(b);
-        //}
     }
 
     ~StreamReader()

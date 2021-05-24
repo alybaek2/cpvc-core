@@ -9,8 +9,6 @@
 
 #include "Serialize.h"
 
-struct CoreSnapshot;
-
 // Status bits
 constexpr byte statusDrive0Busy = 0x01;
 constexpr byte statusDrive1Busy = 0x02;

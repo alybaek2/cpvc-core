@@ -14,7 +14,6 @@
 #include "IBus.h"
 
 struct CoreSnapshot;
-#include "Encode.h"
 
 // Z80 flags
 constexpr byte flagS = 0x80;     // Sign flag
@@ -139,7 +138,6 @@ public:
         _fdc,
         _tape,
         _screen)
-
 
 private:
     // Hardware components.

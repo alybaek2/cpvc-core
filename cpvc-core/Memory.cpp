@@ -1,12 +1,13 @@
 #include "Memory.h"
-//#include "CoreSnapshot.h"
 
-int Memory::_nextRomId = 0;
-std::map<int, Mem16k> Memory::_romCache;
+RomId Memory::_nextRomId = (emptyRomId + 1);
+std::map<RomId, Mem16k> Memory::_romCache;
+const Mem16k Memory::emptyRom = {};
+
 
 int Memory::GetRomId(const Mem16k& rom)
 {
-    for (std::pair<int, Mem16k> i : _romCache)
+    for (std::pair<RomId, Mem16k> i : _romCache)
     {
         if (memcmp(&i.second[0], &rom[0], 0x4000) == 0)
         {
@@ -14,21 +15,9 @@ int Memory::GetRomId(const Mem16k& rom)
         }
     }
 
-    int romId = _nextRomId;
+    RomId romId = _nextRomId;
     _nextRomId++;
     _romCache[romId] = rom;
 
     return romId;
-}
-
-bool Memory::GetRom(int id, Mem16k& rom)
-{
-    std::map<int, Mem16k>::iterator i = _romCache.find(id);
-    if (i != _romCache.end())
-    {
-        rom = i->second;
-        return true;
-    }
-
-    return false;
 }

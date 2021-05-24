@@ -90,6 +90,7 @@ bool Disk::LoadDiskV1(const byte* pBuffer, int size)
 
 bool Disk::LoadDiskV2(const byte* pBuffer, int size)
 {
+    // Save image...
     _imageVersion = 2;
     _image.resize(size);
     memcpy_s(_image.data(), _image.size(), pBuffer, size);

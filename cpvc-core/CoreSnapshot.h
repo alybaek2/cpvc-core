@@ -2,16 +2,6 @@
 
 #include "common.h"
 #include "Blob.h"
-
-#include "Memory.h"
-#include "PPI.h"
-#include "PSG.h"
-#include "Keyboard.h"
-#include "GateArray.h"
-#include "Tape.h"
-#include "FDC.h"
-#include "CRTC.h"
-
 #include "Serialize.h"
 
 // Optimized core storage.
