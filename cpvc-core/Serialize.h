@@ -1,14 +1,12 @@
 #pragma once
 
-#include <map>
 #include <array>
+#include <map>
 
 #include "common.h"
-
 #include "Blob.h"
-
-#include "Phase.h"
 #include "BlockPhase.h"
+#include "Phase.h"
 
 // Serialization for base types...
 #define SERIALIZE_BASETYPE(T) \
@@ -105,6 +103,30 @@ public:
     {
         memcpy(a.data(), p, S);
         p += Size(a);
+    }
+
+    template<class T, int S>
+    __forceinline static uint64_t Size(const std::array<T, S>& x)
+    {
+        return S * Size(*((T*)nullptr));
+    }
+
+    template<class T, int S>
+    __forceinline static void Write(byte*& p, const std::array<T, S>& x)
+    {
+        for (const T& t : x)
+        {
+            Write(p, t);
+        }
+    }
+
+    template<class T, int S>
+    __forceinline static void Read(byte*& p, std::array<T, S>& x)
+    {
+        for (size_t i = 0; i < S; i++)
+        {
+            Read(p, x[i]);
+        }
     }
 
     template<class T, int S, typename... Args>

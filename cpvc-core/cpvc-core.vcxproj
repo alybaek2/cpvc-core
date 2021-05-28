@@ -138,6 +138,7 @@
     <ClInclude Include="Phase.h" />
     <ClInclude Include="PPI.h" />
     <ClInclude Include="PSG.h" />
+    <ClInclude Include="Rom.h" />
     <ClInclude Include="Sector.h" />
     <ClInclude Include="Serialize.h" />
     <ClInclude Include="StreamWriter.h" />
@@ -161,6 +162,7 @@
     <ClCompile Include="Memory.cpp" />
     <ClCompile Include="PPI.cpp" />
     <ClCompile Include="PSG.cpp" />
+    <ClCompile Include="Rom.cpp" />
     <ClCompile Include="Sector.cpp" />
     <ClCompile Include="Tape.cpp" />
     <ClCompile Include="Track.cpp" />

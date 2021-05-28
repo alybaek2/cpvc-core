@@ -93,6 +93,9 @@
     <ClInclude Include="BlockPhase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Rom.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PSG.cpp">
@@ -138,6 +141,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Encode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Rom.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

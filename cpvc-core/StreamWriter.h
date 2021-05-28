@@ -31,6 +31,7 @@ public:
         size_t bytesToCopy = Size();
         if (bytesToCopy > bufferSize)
         {
+            // Should really throw an exception here...
             bytesToCopy = bufferSize;
         }
 

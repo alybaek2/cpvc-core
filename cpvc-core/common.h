@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <memory>
 #include <vector>
 
@@ -8,6 +9,8 @@ typedef int8_t offset;
 typedef uint16_t word;
 typedef uint32_t dword;
 typedef uint64_t qword;
+
+using Mem16k = std::array<byte, 0x4000>;
 
 typedef std::vector<byte> bytevector;
 typedef std::vector<word> wordvector;

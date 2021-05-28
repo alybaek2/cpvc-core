@@ -1,18 +1,15 @@
 #pragma once
 
+#include <array>
 #include <map>
 #include <memory>
-#include <array>
+
 #include "common.h"
+#include "Rom.h"
 #include "stringify.h"
+#include "Serialize.h"
 #include "StreamReader.h"
 #include "StreamWriter.h"
-
-#include "Serialize.h"
-
-using RomId = int;
-using RomSlot = byte;
-using Mem16k = std::array<byte, 0x4000>;
 
 inline Mem16k CreateMem16k(byte* pBuffer)
 {
@@ -27,22 +24,12 @@ class Memory
 public:
     Memory()
     {
-        for (word r = 0; r < 256; r++)
-        {
-            _romIds[r] = emptyRomId;
-        }
-
         Reset();
 
-        _lowerRom = emptyRom;
-        _upperRom = emptyRom;
+        _lowerRom = _emptyRom;
     };
 
     ~Memory() {};
-
-    // ROM cache
-    static int GetRomId(const Mem16k& rom);
-    //static bool GetRom(int id, Mem16k& rom);
 
 private:
     Mem16k _banks[8];
@@ -62,20 +49,13 @@ private:
     };
 
     bool _lowerRomEnabled;
-    Mem16k _lowerRom;
-    RomId _lowerRomId;
-
     bool _upperRomEnabled;
-    Mem16k _upperRom;
-    RomId _upperRomId;
     byte _selectedUpperRom;
-    RomId _romIds[256];
 
-    static int _nextRomId;
-    static std::map<int, Mem16k> _romCache;
+    Rom _lowerRom;
+    std::map<RomSlot, Rom> _upperRoms;
 
-    static constexpr RomId emptyRomId = 0;
-    static const Mem16k emptyRom;
+    static Rom _emptyRom;
 
 public:
     void Reset()
@@ -87,6 +67,7 @@ public:
 
         _lowerRomEnabled = true;
         _upperRomEnabled = true;
+
         SelectROM(0);
 
         SetRAMConfig(0);
@@ -112,8 +93,7 @@ public:
 
     void SetLowerROM(const Mem16k& lowerRom)
     {
-        _lowerRomId = GetRomId(lowerRom);
-        _lowerRom = lowerRom;
+        _lowerRom = Rom(lowerRom);
     }
 
     void EnableLowerROM(bool enable)
@@ -124,16 +104,14 @@ public:
 
     void SetUpperROM(RomSlot slot, const Mem16k& rom)
     {
-        _romIds[slot] = GetRomId(rom);
-        if (_selectedUpperRom == slot)
-        {
-            _upperRom = rom;
-        }
+        _upperRoms[slot] = rom;
+        ConfigureRAM();
     }
 
     void RemoveUpperROM(RomSlot slot)
     {
-        _romIds[slot] = emptyRomId;
+        _upperRoms.erase(slot);
+        ConfigureRAM();
     }
 
     void EnableUpperROM(bool enable)
@@ -144,22 +122,8 @@ public:
 
     void SelectROM(RomSlot slot)
     {
-        RomId id = _romIds[slot];
-        if (id == emptyRomId)
-        {
-            // Should we just leave _selectedUpperRom as it is in this case?
-            _selectedUpperRom = 0;
-
-            if (_romIds[_selectedUpperRom] == emptyRomId)
-            {
-                _upperRom = emptyRom;
-            }
-        }
-        else
-        {
-            _selectedUpperRom = slot;
-            _upperRom = _romCache[id];
-        }
+        _selectedUpperRom = slot;
+        ConfigureRAM();
     }
 
     void SetRAMConfig(byte config)
@@ -177,12 +141,13 @@ public:
 
         if (_lowerRomEnabled)
         {
-            _readRAM[0] = _lowerRom.data();
+            _readRAM[0] = _lowerRom.Data();
         }
 
         if (_upperRomEnabled)
         {
-            _readRAM[3] = _upperRom.data();
+            Rom upperRom = (_upperRoms.find(_selectedUpperRom) == _upperRoms.end()) ? _emptyRom : _upperRoms[_selectedUpperRom];
+            _readRAM[3] = upperRom.Data();
         }
     }
 
@@ -194,19 +159,7 @@ public:
         s << memory._upperRomEnabled;
         s << memory._selectedUpperRom;
         s << memory._lowerRom;
-
-        std::map<RomSlot, Mem16k> roms;
-        for (word i = 0; i < 256; i++)
-        {
-            RomSlot slot = static_cast<RomSlot>(i);
-            RomId romId = memory._romIds[slot];
-            if (romId != emptyRomId)
-            {
-                roms[slot] = Memory::_romCache[romId];
-            }
-        }
-
-        s << roms;
+        s << memory._upperRoms;
 
         return s;
     }
@@ -219,30 +172,11 @@ public:
         s >> memory._upperRomEnabled;
         s >> memory._selectedUpperRom;
         s >> memory._lowerRom;
-
-        std::map<RomSlot, Mem16k> roms;
-        s >> roms;
-
-        for (word i = 0; i < 256; i++)
-        {
-            RomSlot slot = static_cast<RomSlot>(i);
-            memory._romIds[slot] = emptyRomId;
-        }
-
-        for (const std::pair<RomSlot, Mem16k>& kv : roms)
-        {
-            memory._romIds[kv.first] = memory.GetRomId(kv.second);
-        }
-
-        // Cache roms...
-        memory._lowerRomId = Memory::GetRomId(memory._lowerRom);
+        s >> memory._upperRoms;
 
         // Probably more consistent to serialize each read and write bank separately, as it's not
         // guaranteed that they will be in sync with _ramConfig, even though they should be!
         memory.ConfigureRAM();
-
-        // Ensure the upper rom is copied to _upperRom...
-        memory.SelectROM(memory._selectedUpperRom);
 
         return s;
     }
@@ -251,7 +185,7 @@ public:
     {
         for (const Mem16k bank : memory._banks)
         {
-            s << "Memory (16k): " << StringifyByteArray(memory._lowerRom) << std::endl;
+            s << "Memory (16k): " << StringifyByteArray(bank) << std::endl;
         }
 
         s << memory._banks;
@@ -260,8 +194,13 @@ public:
         s << memory._lowerRomEnabled << std::endl;
         s << memory._upperRomEnabled << std::endl;
         s << (int)memory._selectedUpperRom << std::endl;
-        s << "Lower rom: " << StringifyByteArray(memory._lowerRom) << std::endl;
+        s << "Lower rom: " << StringifyByteArray(memory._lowerRom.Image()) << std::endl;
         
+        for (const std::pair<RomSlot, Rom>& kv : memory._upperRoms)
+        {
+            s << "Upper rom " << (int)kv.first << ":" << StringifyByteArray(kv.second.Image()) << std::endl;
+        }
+
         return s;
     }
 
@@ -271,14 +210,11 @@ public:
         _lowerRomEnabled,
         _upperRomEnabled,
         _selectedUpperRom,
-        _lowerRomId,
-        _romIds);
+        _lowerRom,
+        _upperRoms);
 
     void SerializePostRead()
     {
-        _lowerRom = _romCache[_lowerRomId];
-        _upperRom = _romCache[_romIds[_selectedUpperRom]];
-
         ConfigureRAM();
     }
 };
