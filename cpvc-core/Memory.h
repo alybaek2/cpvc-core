@@ -50,7 +50,7 @@ private:
 
     bool _lowerRomEnabled;
     bool _upperRomEnabled;
-    byte _selectedUpperRom;
+    RomSlot _selectedUpperRom;
 
     Rom _lowerRom;
     std::map<RomSlot, Rom> _upperRoms;
@@ -146,7 +146,13 @@ public:
 
         if (_upperRomEnabled)
         {
-            Rom upperRom = (_upperRoms.find(_selectedUpperRom) == _upperRoms.end()) ? _emptyRom : _upperRoms[_selectedUpperRom];
+            RomSlot selectedUpperRom = _selectedUpperRom;
+            if (_upperRoms.find(_selectedUpperRom) == _upperRoms.end())
+            {
+                selectedUpperRom = 0;
+            }
+
+            Rom upperRom = (_upperRoms.find(selectedUpperRom) == _upperRoms.end()) ? _emptyRom : _upperRoms[selectedUpperRom];
             _readRAM[3] = upperRom.Data();
         }
     }
