@@ -27,16 +27,6 @@ public:
         _romId = GetRomId(image);
     }
 
-    operator Mem16k& () const
-    {
-        return _romCache[_romId];
-    }
-
-    byte* Data() const
-    {
-        return _romCache[_romId].data();
-    }
-
     friend StreamWriter& operator<<(StreamWriter& s, const Rom& rom)
     {
         s << rom.Image();

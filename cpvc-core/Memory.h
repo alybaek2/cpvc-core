@@ -33,7 +33,7 @@ public:
 
 private:
     Mem16k _banks[8];
-    byte* _readRAM[4];
+    const byte* _readRAM[4];
     byte* _writeRAM[4];
 
     byte _ramConfig;
@@ -141,7 +141,7 @@ public:
 
         if (_lowerRomEnabled)
         {
-            _readRAM[0] = _lowerRom.Data();
+            _readRAM[0] = _lowerRom.Image().data();
         }
 
         if (_upperRomEnabled)
@@ -153,7 +153,7 @@ public:
             }
 
             Rom upperRom = (_upperRoms.find(selectedUpperRom) == _upperRoms.end()) ? _emptyRom : _upperRoms[selectedUpperRom];
-            _readRAM[3] = upperRom.Data();
+            _readRAM[3] = upperRom.Image().data();
         }
     }
 
