@@ -17,11 +17,6 @@ public:
     {
     }
 
-    Rom(RomId id)
-    {
-        _romId = id;
-    }
-
     Rom(const Mem16k& image)
     {
         _romId = GetRomId(image);
@@ -51,11 +46,12 @@ public:
         return _romCache[_romId];
     }
 
+private:
     static int GetRomId(const Mem16k& rom)
     {
         for (std::pair<RomId, Mem16k> i : _romCache)
         {
-            if (memcmp(&i.second[0], &rom[0], 0x4000) == 0)
+            if (memcmp(&i.second[0], &rom[0], i.second.size()) == 0)
             {
                 return i.first;
             }
@@ -68,7 +64,6 @@ public:
         return romId;
     }
 
-private:
     RomId _romId;
 
     static int _nextRomId;
