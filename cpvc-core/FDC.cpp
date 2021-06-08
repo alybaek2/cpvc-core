@@ -266,7 +266,7 @@ void FDC::SetDataDirection(byte direction)
     _mainStatus = (_mainStatus & ~0x40) | ((_dataDirection == fdcDataOut) ? 0x40 : 0x00);
 }
 
-void FDC::SetPhase(FDC::Phase p)
+void FDC::SetPhase(Phase p)
 {
     _phase = p;
 
@@ -381,7 +381,7 @@ void FDC::Tick()
             if (_execIndex < _execByteCount)
             {
                 FDD& drive = CurrentDrive();
-                Sector& sec = drive._disk._tracks[drive._currentTrack]._sectors[drive._currentSector];
+                Sector& sec = drive.GetDisk()._tracks[drive._currentTrack]._sectors[drive._currentSector];
                 byte b = sec._data.at(_execIndex);
 
                 PushReadBuffer(b);
@@ -454,7 +454,7 @@ void FDC::CmdReadData()
     byte& gapLength = _commandBytes[7];
     byte& dataLength = _commandBytes[8];
 
-    if (!CurrentDrive()._hasDisk)
+    if (!CurrentDrive().HasDisk())
     {
         SetPhase(phResult);
 
@@ -529,7 +529,7 @@ void FDC::CmdWriteData()
     byte& gapLength = _commandBytes[7];
     byte& dataLength = _commandBytes[8];
 
-    if (!CurrentDrive()._hasDisk)
+    if (!CurrentDrive().HasDisk())
     {
         SetPhase(phResult);
 
@@ -774,6 +774,20 @@ void FDC::CmdSenseDriveStatus()
     SetPhase(phResult);
 }
 
+StreamWriter& operator<<(StreamWriter& s, const Phase& phase)
+{
+    s << (int)phase;
+
+    return s;
+}
+
+StreamReader& operator>>(StreamReader& s, Phase& phase)
+{
+    s >> (int&)phase;
+
+    return s;
+}
+
 StreamWriter& operator<<(StreamWriter& s, const FDC& fdc)
 {
     s << fdc._drives;
@@ -848,16 +862,40 @@ StreamReader& operator>>(StreamReader& s, FDC& fdc)
     return s;
 }
 
-StreamWriter& operator<<(StreamWriter& s, const FDC::Phase& phase)
+std::ostringstream& operator<<(std::ostringstream& s, const FDC& fdc)
 {
-    s << (int) phase;
+    s << "FDC: Read timeout: " << (int)fdc._readTimeout << std::endl;
 
-    return s;
-}
+    s << "FDC: Main status: " << (int)fdc._mainStatus << std::endl;
+    s << (int)fdc._data << std::endl;
+    s << (int)fdc._dataDirection << std::endl;
+    s << (int)fdc._motor << std::endl;
+    s << (int)fdc._currentDrive << std::endl;
+    s << (int)fdc._currentHead << std::endl;
+    s << StringifyByteArray(fdc._status) << std::endl;
 
-StreamReader& operator>>(StreamReader& s, FDC::Phase& phase)
-{
-    s >> (int&) phase;
+    s << "FDC: Seek completed: " << fdc._seekCompleted[0] << fdc._seekCompleted[1] << std::endl;
+    s << "FDC: Status changed: " << fdc._statusChanged[0] << fdc._statusChanged[1] << std::endl;
+
+    s << "FDC: Phase: " << (int)fdc._phase << std::endl;
+    s << "FDC: Command bytes: " << StringifyByteArray(fdc._commandBytes) << std::endl;
+    s << "FDC: Command bytes count: " << (int)fdc._commandByteCount << std::endl;
+    s << "FDC: Exec bytes: " << StringifyByteArray(fdc._execBytes) << std::endl;
+    s << "FDC: Exec bytes count: " << (int)fdc._execByteCount << std::endl;
+    s << "FDC: Exec index: " << (int)fdc._execIndex << std::endl;
+    s << "FDC: Result bytes: " << StringifyByteArray(fdc._resultBytes) << std::endl;
+    s << "FDC: Result bytes count: " << (int)fdc._resultByteCount << std::endl;
+    s << "FDC: Result index: " << (int)fdc._resultIndex << std::endl;
+
+    s << "FDC: Step read time: " << (int)fdc._stepReadTime << std::endl;;
+    s << "FDC: Head load time: " << (int)fdc._headLoadTime << std::endl;;
+    s << "FDC: Head unload time: " << (int)fdc._headUnloadTime << std::endl;;
+    s << "FDC: Non DMA mode: " << (int)fdc._nonDmaMode << std::endl;;
+    s << "FDC: Read buffer: " << StringifyByteArray(fdc._readBuffer) << std::endl;;
+    s << "FDC: Read buffer index: " << (int)fdc._readBufferIndex << std::endl;;
+
+    s << fdc._drives[0];
+    s << fdc._drives[1];
 
     return s;
 }

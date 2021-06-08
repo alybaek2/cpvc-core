@@ -32,7 +32,6 @@ Sector& Sector::operator=(const Sector& sector)
 
     _dataLength = sector._dataLength;
 
-    // Optimization for CopyFrom...
     _data.resize(sector._data.size());
     memcpy(_data.data(), sector._data.data(), _data.size());
 

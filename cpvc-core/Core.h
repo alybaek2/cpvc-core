@@ -13,6 +13,8 @@
 #include "Bus.h"
 #include "IBus.h"
 
+struct CoreSnapshot;
+
 // Z80 flags
 constexpr byte flagS = 0x80;     // Sign flag
 constexpr byte flagZ = 0x40;     // Zero flag
@@ -35,20 +37,25 @@ public:
     Core(IBus* pBus);
     ~Core();
 
-    std::map<int, std::unique_ptr<Core>> _snapshots;
+    std::map<int, std::unique_ptr<CoreSnapshot>> _snapshots;
+    int _lastSnapshotId;
 
-    void SaveSnapshot(int id);
-    bool LoadSnapshot(int id);
+    std::map<int, std::shared_ptr<CoreSnapshot>> _newSnapshots;
+    std::shared_ptr<CoreSnapshot> _lastSnapshot;
+    std::shared_ptr<CoreSnapshot> _currentSnapshot;
 
-    void CopyFrom(const Core& core);
+    bool CreateSnapshot(int id);
+    void DeleteSnapshot(int id);
+    bool RevertToSnapshot(int id);
+
     void Init();
     void Reset();
     bool KeyPress(byte keycode, bool down);
     void LoadTape(const byte* pBuffer, int size);
     void LoadDisc(byte drive, const byte* pBuffer, int size);
 
-    void SetScreen(byte* pBuffer, word pitch, word height, word width);
-    byte* GetScreen();
+    void SetScreen(word pitch, word height, word width);
+    void CopyScreen(byte* pBuffer, size_t size);
 
     void SetFrequency(dword frequency);
 
@@ -92,6 +99,45 @@ public:
 
     friend StreamWriter& operator<<(StreamWriter& s, const Core& core);
     friend StreamReader& operator>>(StreamReader& s, Core& core);
+
+    friend std::ostringstream& operator<<(std::ostringstream& s, const Core& core);
+
+    SERIALIZE_MEMBERS(
+        AF,
+        BC,
+        DE,
+        HL,
+        IR,
+        AF_,
+        BC_,
+        DE_,
+        HL_,
+        IX,
+        IY,
+        PC,
+        SP,
+        _iff1,
+        _iff2,
+        _interruptRequested,
+        _interruptMode,
+        _eiDelay,
+        _halted,
+        _keyboard,
+        _crtc,
+        _psg,
+        _ppi,
+        _gateArray,
+        _ticks,
+        _frequency,
+        _audioTickTotal,
+        _audioTicksToNextSample,
+        _audioSampleCount,
+        _scrHeight,
+        _scrPitch,
+        _memory,
+        _fdc,
+        _tape,
+        _screen)
 
 private:
     // Hardware components.
@@ -146,11 +192,9 @@ private:
     bool HandleInterrupt();
 
     // Screen buffer.
-    byte* _pScreen;
     word _scrPitch;
     word _scrHeight;
     word _scrWidth;
-
     bytevector _screen;
 
     wordvector* _pAudioSamples;

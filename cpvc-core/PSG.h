@@ -4,32 +4,13 @@
 #include "Keyboard.h"
 #include "IPSG.h"
 
+#include "Serialize.h"
+
 class PSG : public IPSG
 {
 public:
     PSG(Keyboard& keyboard);
     ~PSG();
-
-    void CopyFrom(const PSG& psg)
-    {
-        _bdir = psg._bdir;
-        _bc1 = psg._bc1;
-        _selectedRegister = psg._selectedRegister;
-        memcpy(_register, psg._register, sizeof(_register));
-        memcpy(_toneTicks, psg._toneTicks, sizeof(_toneTicks));
-        memcpy(_state, psg._state, sizeof(_state));
-        _noiseTicks = psg._noiseTicks;
-        
-        _noiseAmplitude = psg._noiseAmplitude;
-        _noiseRandom = psg._noiseRandom;
-
-        _envelopeTickCounter = psg._envelopeTickCounter;
-        _envelopeStepCount = psg._envelopeStepCount;
-        _envelopePeriodCount = psg._envelopePeriodCount;
-        _envelopeState = psg._envelopeState;
-        _noiseTickCounter = psg._noiseTickCounter;
-        _envelopeStepState = psg._envelopeStepState;
-    }
 
     void Reset();
     void Amplitudes(byte (&amp)[3]);
@@ -40,6 +21,23 @@ public:
     void SetControl(bool bdir, bool bc1);
     bool Bc1();
     bool Bdir();
+
+    SERIALIZE_MEMBERS(
+        _bdir,
+        _bc1,
+        _selectedRegister,
+        _register,
+        _toneTicks,
+        _state,
+        _noiseTicks,
+        _noiseAmplitude,
+        _noiseRandom,
+        _envelopeTickCounter,
+        _envelopeStepCount,
+        _envelopePeriodCount,
+        _envelopeState,
+        _noiseTickCounter,
+        _envelopeStepState)
 
 private:
     bool _bdir;
@@ -93,5 +91,7 @@ private:
 
     friend StreamWriter& operator<<(StreamWriter& s, const PSG& psg);
     friend StreamReader& operator>>(StreamReader& s, PSG& psg);
+
+    friend std::ostringstream& operator<<(std::ostringstream& s, const PSG& psg);
 };
 

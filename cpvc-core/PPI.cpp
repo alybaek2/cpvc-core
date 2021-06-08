@@ -192,3 +192,18 @@ StreamReader& operator>>(StreamReader& s, PPI& ppi)
 
     return s;
 }
+
+std::ostringstream& operator<<(std::ostringstream& s, const PPI& ppi)
+{
+    s << "PPI: Printer ready: " << (int)ppi._printerReady << std::endl;
+    s << "PPI: Exp: " << (int)ppi._exp << std::endl;
+    s << "PPI: Refresh rate: " << (int)ppi._refreshRate << std::endl;
+    s << "PPI: Manufacturer: " << (int)ppi._manufacturer << std::endl;
+    s << "PPI: Tape write data: " << (int)ppi._tapeWriteData << std::endl;
+    s << "PPI: Port A: " << (int)ppi._portA << std::endl;
+    s << "PPI: Port B: " << (int)ppi._portB << std::endl;
+    s << "PPI: Port C: " << (int)ppi._portC << std::endl;
+    s << "PPI: Control: " << (int)ppi._control << std::endl;
+
+    return s;
+}

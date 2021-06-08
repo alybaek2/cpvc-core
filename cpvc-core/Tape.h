@@ -1,8 +1,14 @@
 #pragma once
 
 #include "common.h"
+#include "stringify.h"
+
+#include "Serialize.h"
+
 #include "StreamReader.h"
 #include "StreamWriter.h"
+
+#include "BlockPhase.h"
 
 // Macro for adjusting T-State values. Values in .CDT file are for
 // a 3.5MHz clock, whereas we're using a 4MHz clock.
@@ -58,44 +64,14 @@ struct DataBlock
     dword _length;
 };
 
+StreamWriter& operator<<(StreamWriter& s, const BlockPhase& phase);
+StreamReader& operator>>(StreamReader& s, BlockPhase& phase);
+
 class Tape
 {
 public:
     Tape();
     ~Tape();
-
-    void CopyFrom(const Tape& tape)
-    {
-        _level = tape._level;
-        _motor = tape._motor;
-        _playing = tape._playing;
-
-        _size = tape._size;
-        _buffer = tape._buffer;
-
-        _currentBlockIndex = tape._currentBlockIndex;
-        _blockIndex = tape._blockIndex;
-        _phase = tape._phase;
-        _pulsesRemaining = tape._pulsesRemaining;
-        _dataIndex = tape._dataIndex;
-        _levelChanged = tape._levelChanged;
-        _dataByte = tape._dataByte;
-        _remainingBits = tape._remainingBits;
-        _pulseIndex = tape._pulseIndex;
-        _pause = tape._pause;
-
-        _dataBlock = tape._dataBlock;
-        _speedBlock = tape._speedBlock;
-
-        if (tape._pBuffer == nullptr)
-        {
-            _pBuffer = nullptr;
-        }
-        else
-        {
-            _pBuffer = _buffer.data();
-        }
-    }
 
     bool _level;
     bool _motor;
@@ -107,22 +83,38 @@ public:
     void Eject();
     void Tick();
 
-private:
-    byte* _pBuffer;
-    int _size;
     bytevector _buffer;
 
-    enum BlockPhase
-    {
-        Start,
-        Pilot,
-        SyncOne,
-        SyncTwo,
-        Data,
-        Pause,
-        PauseZero,
-        End
-    };
+    SERIALIZE_MEMBERS(
+        _currentBlockIndex,
+        _blockIndex,
+        _phase,
+        _pulsesRemaining,
+        _dataIndex,
+        _levelChanged,
+        _dataByte,
+        _remainingBits,
+        _pulseIndex,
+        _pause,
+        _dataBlock._zeroLength,
+        _dataBlock._oneLength,
+        _dataBlock._usedBitsLastByte,
+        _dataBlock._pause,
+        _dataBlock._length,
+        _speedBlock._pilotPulseLength,
+        _speedBlock._sync1Length,
+        _speedBlock._sync2Length,
+        _speedBlock._pilotPulseCount,
+        _playing,
+        _level,
+        _motor,
+        _tickPos,
+        _ticksToNextLevelChange,
+        _buffer,
+        _hasTape)
+
+private:
+    bool _hasTape;
 
     // Parsing members...
     int _currentBlockIndex;
@@ -144,7 +136,7 @@ private:
 
     qword TicksToNextLevelChange();
 
-    dword BlockSize(byte* p);
+    dword BlockSize();
 
     qword DataPhase(byte* pData);
     void EndPhase();
@@ -162,7 +154,5 @@ private:
     friend StreamWriter& operator<<(StreamWriter& s, const Tape& tape);
     friend StreamReader& operator>>(StreamReader& s, Tape& tape);
 
-    friend StreamWriter& operator<<(StreamWriter& s, const Tape::BlockPhase& phase);
-    friend StreamReader& operator>>(StreamReader& s, Tape::BlockPhase& phase);
+    friend std::ostringstream& operator<<(std::ostringstream& s, const Tape& tape);
 };
-

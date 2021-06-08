@@ -1,25 +1,18 @@
 #pragma once
 
 #include "common.h"
+#include <sstream>
 
 #include "Memory.h"
 #include "IBus.h"
 
+#include "Serialize.h"
 
 class GateArray : public IBusNoAddressWriteOnly
 {
 public:
     GateArray(Memory& memory, bool& interruptRequested, byte& scanLineCount);
     ~GateArray();
-
-    void CopyFrom(const GateArray& gateArray)
-    {
-        _selectedPen = gateArray._selectedPen;
-        memcpy(_pen, gateArray._pen, sizeof(_pen));
-        _border = gateArray._border;
-        _mode = gateArray._mode;
-        memcpy(_renderedPenBytes, gateArray._renderedPenBytes, sizeof(_renderedPenBytes));
-    }
 
     Memory& _memory;
     byte _selectedPen;
@@ -40,4 +33,12 @@ public:
 
     friend StreamWriter& operator<<(StreamWriter& s, const GateArray& gateArray);
     friend StreamReader& operator>>(StreamReader& s, GateArray& gateArray);
+
+    SERIALIZE_MEMBERS(
+        _selectedPen,
+        _pen,
+        _border,
+        _mode)
+
+    friend std::ostringstream& operator<<(std::ostringstream& s, const GateArray& gateArray);
 };

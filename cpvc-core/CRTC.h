@@ -1,40 +1,19 @@
 #pragma once
 
 #include "common.h"
+#include "stringify.h"
 
 #include "IBus.h"
 #include "StreamReader.h"
 #include "StreamWriter.h"
+
+#include "Serialize.h"
 
 class CRTC : public IBus
 {
 public:
     CRTC(bool& requestInterrupt);
     ~CRTC();
-
-    void CopyFrom(const CRTC& crtc)
-    {
-        _x = crtc._x;
-        _y = crtc._y;
-        _hCount = crtc._hCount;
-        _vCount = crtc._vCount;
-        _raster = crtc._raster;
-        _inHSync = crtc._inHSync;
-        _hSyncCount = crtc._hSyncCount;
-        _inVSync = crtc._inVSync;
-        _vSyncCount = crtc._vSyncCount;
-        _inVTotalAdjust = crtc._inVTotalAdjust;
-        _vTotalAdjustCount = crtc._vTotalAdjustCount;
-
-        _scanLineCount = crtc._scanLineCount;
-        _vSyncDelay = crtc._vSyncDelay;
-
-        _memoryAddress = crtc._memoryAddress;
-
-        memcpy(_register, crtc._register, sizeof(_register));
-
-        _selectedRegister = crtc._selectedRegister;
-    }
 
     void Tick();
 
@@ -85,6 +64,24 @@ public:
     byte& _lightPenAddressHigh = _register[16];
     byte& _lightPenAddressLow = _register[17];
 
+    SERIALIZE_MEMBERS(
+        _x,
+        _y,
+        _hCount,
+        _vCount,
+        _raster,
+        _inHSync,
+        _hSyncCount,
+        _inVSync,
+        _vSyncCount,
+        _inVTotalAdjust,
+        _vTotalAdjustCount,
+        _scanLineCount,
+        _vSyncDelay,
+        _memoryAddress,
+        _register,
+        _selectedRegister)
+
 private:
     byte _selectedRegister;
 
@@ -98,4 +95,6 @@ private:
 
     friend StreamWriter& operator<<(StreamWriter& s, const CRTC& crtc);
     friend StreamReader& operator>>(StreamReader& s, CRTC& crtc);
+
+    friend std::ostringstream& operator<<(std::ostringstream& s, const CRTC& crtc);
 };

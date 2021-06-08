@@ -1,8 +1,10 @@
 #pragma once
 
 #include "common.h"
+#include "stringify.h"
 #include "StreamReader.h"
 #include "StreamWriter.h"
+#include "Serialize.h"
 
 class Keyboard
 {
@@ -10,19 +12,17 @@ public:
     Keyboard();
     ~Keyboard();
 
-    void CopyFrom(const Keyboard& keyboard)
-    {
-        memcpy(_matrix, keyboard._matrix, sizeof(_matrix));
-        memcpy(_matrixClash, keyboard._matrixClash, sizeof(_matrixClash));
-        _selectedLine = keyboard._selectedLine;
-    }
-
     void Reset();
     bool KeyPress(byte line, byte bit, bool down);
     byte ReadSelectedLine();
 
     void SelectLine(byte line);
     byte SelectedLine();
+
+    SERIALIZE_MEMBERS(
+        _matrix,
+        _matrixClash,
+        _selectedLine)
 
 private:
     constexpr static byte _lineCount = 10;
@@ -35,5 +35,7 @@ private:
 
     friend StreamWriter& operator<<(StreamWriter& s, const Keyboard& keyboard);
     friend StreamReader& operator>>(StreamReader& s, Keyboard& keyboard);
-};
 
+    friend std::ostream& operator<<(std::ostream& s, const Keyboard& keyboard);
+    friend std::ostringstream& operator<<(std::ostringstream& s, const Keyboard& keyboard);
+};

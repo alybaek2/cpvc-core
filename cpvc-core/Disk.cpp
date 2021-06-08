@@ -26,10 +26,16 @@ Disk& Disk::operator=(const Disk& disk)
 
 bool Disk::LoadDisk(const byte* pBuffer, int size)
 {
+    if (pBuffer == nullptr || size == 0)
+    {
+        _tracks.clear();
+        return false;
+    }
+
     bool retval = false;
     if (memcmp(pBuffer, "EXTENDED CPC DSK File\r\nDisk-Info\r\n", 0x22) == 0)
     {
-        retval = LoadDiskV2(pBuffer);
+        retval = LoadDiskV2(pBuffer, size);
     }
     else if (memcmp(pBuffer, "MV - CPC", 0x08) == 0)
     {
@@ -41,6 +47,11 @@ bool Disk::LoadDisk(const byte* pBuffer, int size)
 
 bool Disk::LoadDiskV1(const byte* pBuffer, int size)
 {
+    // Save image...
+    _imageVersion = 1;
+    _image.resize(size);
+    memcpy_s(_image.data(), _image.size(), pBuffer, size);
+
     // Read Disc Information Block...
     byte tracksCount = pBuffer[0x30];
     byte sideCount = pBuffer[0x31];
@@ -77,8 +88,13 @@ bool Disk::LoadDiskV1(const byte* pBuffer, int size)
     return true;
 }
 
-bool Disk::LoadDiskV2(const byte* pBuffer)
+bool Disk::LoadDiskV2(const byte* pBuffer, int size)
 {
+    // Save image...
+    _imageVersion = 2;
+    _image.resize(size);
+    memcpy_s(_image.data(), _image.size(), pBuffer, size);
+
     byte tracksCount = pBuffer[0x30];
     byte sideCount = pBuffer[0x31];
 

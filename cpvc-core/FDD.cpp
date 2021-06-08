@@ -14,7 +14,9 @@ void FDD::Init()
     _currentSector = 0;
     _currentTrack = 0;
 
-    _hasDisk = false;
+    _tempDiskLoaded = false;
+
+    _diskImage.reset();
 }
 
 void FDD::Eject()
@@ -22,18 +24,31 @@ void FDD::Eject()
     Init();
 }
 
-bool FDD::Load(Disk& d)
+bool FDD::Load(Disk& d, const bytevector& image)
 {
-    _hasDisk = true;
-    _disk = d;
+    _tempDiskLoaded = false;
+
+    _diskImage = std::make_unique<bytevector>(image);
 
     return true;
 }
 
+Disk& FDD::GetDisk()
+{
+    if (!_tempDiskLoaded)
+    {
+        _tempDisk.LoadDisk(_diskImage->data(), _diskImage->size());
+        _tempDiskLoaded = true;
+    }
+
+    return _tempDisk;
+}
+
+
 // Floppy Drive functions...
 bool FDD::IsReady()
 {
-    if (!_hasDisk)
+    if (!HasDisk())
     {
         return false;
     }
@@ -43,15 +58,15 @@ bool FDD::IsReady()
 
 bool FDD::Seek(const byte cylinder)
 {
-    if (!_hasDisk)
+    if (!HasDisk())
     {
         // No disk inserted... can't seek!
         return false;
     }
 
-    for (size_t t = 0; t < _disk._tracks.size(); t++)
+    for (size_t t = 0; t < GetDisk()._tracks.size(); t++)
     {
-        if (_disk._tracks.at(t)._id == cylinder)
+        if (GetDisk()._tracks.at(t)._id == cylinder)
         {
             _currentTrack = t;
             return true;
@@ -64,7 +79,7 @@ bool FDD::Seek(const byte cylinder)
 bool FDD::ReadId(CHRN& chrn)
 {
     // Return false if we can't find a good ID...
-    if (!_hasDisk)
+    if (!HasDisk())
     {
         return false;
     }
@@ -81,7 +96,7 @@ bool FDD::ReadId(CHRN& chrn)
 
 Track& FDD::CurrentTrack()
 {
-    for (Track& track : _disk._tracks)
+    for (Track& track : GetDisk()._tracks)
     {
         if (track._id == _currentTrack)
         {
@@ -108,7 +123,7 @@ bool FDD::WriteData(
     byte* pBuffer,
     word bufferSize)
 {
-    if (!_hasDisk)
+    if (!HasDisk())
     {
         return false;
     }
@@ -158,7 +173,7 @@ bool FDD::ReadData(
     byte*& pBuffer,
     word& bufferSize)
 {
-    if (!_hasDisk)
+    if (!HasDisk())
     {
         return false;
     }
@@ -202,9 +217,9 @@ bool FDD::ReadData(
 
 void FDD::ReadDataResult(byte& cylinder, byte& head, byte& sector, byte& numBytes)
 {
-    for (size_t t = 0; t < _disk._tracks.size(); t++)
+    for (size_t t = 0; t < GetDisk()._tracks.size(); t++)
     {
-        Track& track = _disk._tracks.at(t);
+        Track& track = GetDisk()._tracks.at(t);
         if (track._id == cylinder)
         {
             for (size_t s = 0; s < track._sectors.size(); s++)
@@ -218,7 +233,7 @@ void FDD::ReadDataResult(byte& cylinder, byte& head, byte& sector, byte& numByte
 
             // Get first sector on next cylinder
             cylinder++;
-            Track& track2 = _disk._tracks.at(cylinder);
+            Track& track2 = GetDisk()._tracks.at(cylinder);
             sector = track2._sectors.at(0)._id;
 
             for (size_t s = 0; s < track2._sectors.size(); s++)
@@ -237,7 +252,7 @@ void FDD::ReadDataResult(byte& cylinder, byte& head, byte& sector, byte& numByte
 
 byte FDD::GetTrack()
 {
-    if (!_hasDisk)
+    if (!HasDisk())
     {
         return 0;
     }
@@ -252,12 +267,12 @@ StreamWriter& operator<<(StreamWriter& s, const FDD& fdd)
     s << fdd._currentSector;
     s << fdd._currentTrack;
 
-    bool hasDisk = fdd._hasDisk;
+    bool hasDisk = fdd.HasDisk();
     s << hasDisk;
 
     if (hasDisk)
     {
-        s << fdd._disk;
+        s << *fdd._diskImage;
     }
 
     return s;
@@ -268,11 +283,29 @@ StreamReader& operator>>(StreamReader& s, FDD& fdd)
     s >> fdd._currentSector;
     s >> fdd._currentTrack;
 
-    s >> fdd._hasDisk;
-    if (fdd._hasDisk)
+    bool hasDisk = false;
+    s >> hasDisk;
+    if (hasDisk)
     {
-        s >> fdd._disk;
+        fdd._diskImage = std::make_unique<bytevector>();
+        s >> *fdd._diskImage;
     }
+
+    fdd._tempDiskLoaded = false;
+
+    return s;
+}
+
+std::ostringstream& operator<<(std::ostringstream& s, const FDD& fdd)
+{
+    s << "FDD: Current sector: " << (int)fdd._currentSector << std::endl;
+    s << "FDD: Current track: " << (int)fdd._currentTrack << std::endl;
+    s << "FDD: Has disk: " << (int)fdd.HasDisk() << std::endl;
+    if (fdd.HasDisk())
+    {
+        s << "FDD: Disk image: " << StringifyByteArray(*fdd._diskImage) << std::endl;
+    }
+    s << "FDD: Temp disk loaded: " << fdd._tempDiskLoaded << std::endl;
 
     return s;
 }

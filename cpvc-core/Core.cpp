@@ -1,4 +1,7 @@
 #include "Core.h"
+#include "CoreSnapshot.h"
+
+#include "Serialize.h"
 
 Core::Core() : _pBus(&_bus)
 {
@@ -41,7 +44,6 @@ void Core::Init()
 
     _ticks = 0;
 
-    _pScreen = nullptr;
     _scrPitch = 0;
     _scrHeight = 0;
     _scrWidth = 0;
@@ -54,6 +56,12 @@ void Core::Init()
     _audioTickTotal = 0;
     _audioTicksToNextSample = 0;
     _audioSampleCount = 0;
+
+    _lastSnapshotId = -1;
+    _snapshots.clear();
+
+    _newSnapshots.clear();
+    _lastSnapshot = nullptr;
 }
 
 bool Core::KeyPress(byte keycode, bool down)
@@ -62,17 +70,23 @@ bool Core::KeyPress(byte keycode, bool down)
 }
 
 // Screen methods
-void Core::SetScreen(byte* pBuffer, word pitch, word height, word width)
+void Core::SetScreen(word pitch, word height, word width)
 {
     _scrPitch = pitch;
     _scrWidth = width / 16;  // _scrWidth is in CRTC chars (16 pixels per char).
     _scrHeight = height;
-    _pScreen = pBuffer;
+
+    _screen.resize(height * pitch);
 }
 
-byte* Core::GetScreen()
+void Core::CopyScreen(byte* pBuffer, size_t size)
 {
-    return _pScreen;
+    if (pBuffer == nullptr)
+    {
+        return;
+    }
+
+    memcpy_s(pBuffer, size, _screen.data(), _screen.size());
 }
 
 void Core::SetFrequency(dword frequency)
@@ -168,11 +182,6 @@ void Core::NonCPUTick(byte ticks)
 
 void Core::VideoRender()
 {
-    if (_pScreen == nullptr)
-    {
-        return;
-    }
-
     // Ensure the current x and y coordinates don't cause us to overrun the screen buffer.
     if (_crtc._x >= _scrWidth || _crtc._y >= _scrHeight)
     {
@@ -184,7 +193,7 @@ void Core::VideoRender()
     bool inBorder = !inScreen && !inSync;
 
     dword offset = (_scrPitch * _crtc._y) + _crtc._x * 16;
-    byte* pPixel = _pScreen + offset;
+    byte* pPixel = _screen.data() + offset;
 
     if (inSync)
     {
@@ -307,7 +316,7 @@ void Core::LoadDisc(byte drive, const byte* pBuffer, int size)
     Disk disk;
     disk.LoadDisk(buffer.data(), (int) buffer.size());
 
-    _fdc._drives[drive].Load(disk);
+    _fdc._drives[drive].Load(disk, buffer);
 }
 
 void Core::Step(byte stopReason)
@@ -1571,92 +1580,65 @@ StreamReader& operator>>(StreamReader& s, Core& core)
     return s;
 }
 
-void Core::CopyFrom(const Core& core)
+std::ostringstream& operator<<(std::ostringstream& s, const Core& core)
 {
-    AF = core.AF;
-    BC = core.BC;
-    DE = core.DE;
-    HL = core.HL;
-    IR = core.IR;
+    s << "Ticks: " << core._ticks << std::endl;
+    s << "AF: " << (int)core.AF << std::endl;
+    s << "BC: " << (int)core.BC << std::endl;
+    s << "DE: " << (int)core.DE << std::endl;
+    s << "HL: " << (int)core.HL << std::endl;
+    s << "AF': " << (int)core.AF_ << std::endl;
+    s << "BC': " << (int)core.BC_ << std::endl;
+    s << "DE': " << (int)core.DE_ << std::endl;
+    s << "HL': " << (int)core.HL_ << std::endl;
+    s << "IX: " << (int)core.IX << std::endl;
+    s << "IY: " << (int)core.IY << std::endl;
+    s << "PC: " << (int)core.PC << std::endl;
+    s << "SP: " << (int)core.SP << std::endl;
+    s << "IFF1: " << core._iff1 << std::endl;
+    s << "IFF2: " << core._iff2 << std::endl;
+    s << "Interrupt requested: " << core._interruptRequested << std::endl;
+    s << "Interrupt mode: " << (int)core._interruptMode << std::endl;
+    s << "EI delay counter: " << (int)core._eiDelay << std::endl;
+    s << "Halted: " << core._halted << std::endl;
 
-    AF_ = core.AF_;
-    BC_ = core.BC_;
-    DE_ = core.DE_;
-    HL_ = core.HL_;
+    s << core._memory;
+    s << core._keyboard;
+    s << core._gateArray;
+    s << core._fdc;
+    s << core._psg;
+    s << core._ppi;
+    s << core._crtc;
+    s << core._tape;
 
-    IX = core.IX;
-    IY = core.IY;
-
-    PC = core.PC;
-    SP = core.SP;
-
-    _iff1 = core._iff1;
-    _iff2 = core._iff2;
-    _interruptRequested = core._interruptRequested;
-    _interruptMode = core._interruptMode;
-    _eiDelay = core._eiDelay;
-    _halted = core._halted;
-
-    _memory.CopyFrom(core._memory);
-    _fdc.CopyFrom(core._fdc);
-    _keyboard.CopyFrom(core._keyboard);
-    _crtc.CopyFrom(core._crtc);
-    _psg.CopyFrom(core._psg);
-    _ppi.CopyFrom(core._ppi);
-    _gateArray.CopyFrom(core._gateArray);
-    _tape.CopyFrom(core._tape);
-
-    _ticks = core._ticks;
-
-    _frequency = core._frequency;
-    _audioTickTotal = core._audioTickTotal;
-    _audioTicksToNextSample = core._audioTicksToNextSample;
-    _audioSampleCount = core._audioSampleCount;
-
-    // This is a bit of a hack; need to refactor later. Assume if our _pScreen
-    // is null, we're a copy of the real core. Copying from a core with a null
-    // _pScreen means we should copy from core._screen into _pScreen.
-    if (_pScreen == nullptr && core._pScreen != nullptr)
-    {
-        // We're a copy!
-        _scrHeight = core._scrHeight;
-        _scrPitch = core._scrPitch;
-        _scrWidth = core._scrWidth;
-        _screen.resize(_scrHeight * _scrPitch);
-
-        // Should probably have a check to ensure the size of the buffer pointed
-        // to by _pScreen is what we expect (i.e. _scrHeight * _scrPitch).
-        memcpy(_screen.data(), core._pScreen, _screen.size());
-    }
-    else if (_pScreen != nullptr && core._pScreen == nullptr)
-    {
-        // We're "the" core... copy from core._screen to _pBuffer.
-        _scrHeight = core._scrHeight;
-        _scrPitch = core._scrPitch;
-        _scrWidth = core._scrWidth;
-
-        memcpy(_pScreen, core._screen.data(), core._screen.size());
-    }
+    return s;
 }
 
-bool Core::LoadSnapshot(int id)
+bool Core::CreateSnapshot(int id)
 {
-    if (_snapshots.find(id) == _snapshots.end())
-    {
-        return false;
-    }
+    std::shared_ptr<CoreSnapshot> currentSnapshot = std::make_shared<CoreSnapshot>(*this, _lastSnapshot);
 
-    CopyFrom(*_snapshots[id]);
+    _newSnapshots[id] = currentSnapshot;    
+    _lastSnapshot = currentSnapshot;
 
     return true;
 }
 
-void Core::SaveSnapshot(int id)
+void Core::DeleteSnapshot(int id)
 {
-    if (_snapshots.find(id) == _snapshots.end())
+    _newSnapshots.erase(id);
+}
+
+bool Core::RevertToSnapshot(int id)
+{
+    if (_newSnapshots.find(id) == _newSnapshots.end())
     {
-        _snapshots[id] = std::make_unique<Core>();
+        return false;
     }
 
-    _snapshots[id]->CopyFrom(*this);
+    CoreSnapshot& snapshot = *(_newSnapshots[id].get());
+
+    Serialize::Read(*snapshot._coreStuff, *this);
+
+    return true;
 }

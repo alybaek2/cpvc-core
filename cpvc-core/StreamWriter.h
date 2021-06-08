@@ -21,11 +21,17 @@ public:
         return _buffer.size();
     }
 
+    void Reserve(size_t capacity)
+    {
+        _buffer.reserve(capacity);
+    }
+
     size_t CopyTo(byte* pBuffer, size_t bufferSize) const
     {
         size_t bytesToCopy = Size();
         if (bytesToCopy > bufferSize)
         {
+            // Should really throw an exception here...
             bytesToCopy = bufferSize;
         }
 
@@ -141,18 +147,37 @@ public:
         }
     }
 
+    template<typename X>
+    inline void WriteSimpleEx(const X& x)
+    {
+        size_t s = ArgsSize(x);
+
+        size_t oldSize = _buffer.size();
+        _buffer.resize(oldSize + s);
+        byte* p = _buffer.data() + oldSize;
+
+        SerializeWrite(p, x);
+    }
+
 private:
     bytevector _buffer;
 
     template<typename T>
     StreamWriter& Write(const T& data)
     {
-        byte* p = (byte*)& data;
-        for (int x = 0; x < sizeof(data); x++)
-        {
-            _buffer.push_back(p[x]);
-        }
+        size_t size = _buffer.size();
+        _buffer.resize(size + sizeof(data));
+        memcpy_s(_buffer.data() + size, sizeof(data), (byte*)&data, sizeof(data));
 
         return (*this);
     }
+
+    void Write(void* pData, size_t offset, size_t size)
+    {
+        size_t oldSize = _buffer.size();
+        size_t newSize = oldSize + size;
+        _buffer.resize(newSize);
+        memcpy_s(_buffer.data() + oldSize, size, ((byte*)pData) + offset, size);
+    }
 };
+

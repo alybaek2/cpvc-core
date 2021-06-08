@@ -284,3 +284,24 @@ bool PSG::Bdir()
 {
     return _bdir;
 }
+
+std::ostringstream& operator<<(std::ostringstream& s, const PSG& psg)
+{
+    s << "PSG: Bdir: " << (int)psg._bdir << std::endl;
+    s << "PSG: BC1: " << (int)psg._bc1 << std::endl;
+    s << "PSG: Selected Register: " << (int)psg._selectedRegister << std::endl;
+    s << "PSG: Registers: " << StringifyByteArray(psg._register) << std::endl;
+    s << "PSG: Tone ticks: " << psg._toneTicks[0] << " " << psg._toneTicks[1] << " " << psg._toneTicks[2] << std::endl;
+    s << "PSG: Channel states: " << (int)psg._state[0] << " " << (int)psg._state[1] << " " << (int)psg._state[2] << std::endl;
+    s << "PSG: Noise ticks: " << psg._noiseTicks << std::endl;
+    s << "PSG: Noise amplitude: " << (int)psg._noiseAmplitude << std::endl;
+    s << "PSG: Noise random: " << psg._noiseRandom << std::endl;
+    s << "PSG: Envelope tick counter: " << psg._envelopeTickCounter << std::endl;
+    s << "PSG: Envelope step count: " << (int)psg._envelopeStepCount << std::endl;
+    s << "PSG: Envelope period count: " << psg._envelopePeriodCount << std::endl;
+    s << "PSG: Envelope state: " << (int)psg._envelopeState << std::endl;
+    s << "PSG: Noise tick counter: " << psg._noiseTickCounter << std::endl;
+    s << "PSG: Envelope step state: " << (int)psg._envelopeStepState << std::endl;
+
+    return s;
+}

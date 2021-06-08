@@ -5,27 +5,13 @@
 #include "IBus.h"
 #include "IPSG.h"
 
+#include "Serialize.h"
+
 class PPI : public IBus
 {
 public:
     PPI(IPSG& psg, Keyboard& keyboard, bool* pVSync, bool* pTapeMotor, bool* pTapeLevel);
     ~PPI();
-
-    void CopyFrom(const PPI& ppi)
-    {
-        _printerReady = ppi._printerReady;
-        _exp = ppi._exp;
-        _refreshRate = ppi._refreshRate;
-        _manufacturer = ppi._manufacturer;
-
-        _tapeWriteData = ppi._tapeWriteData;
-        _tapeMotor = ppi._tapeMotor;
-
-        _portA = ppi._portA;
-        _portB = ppi._portB;
-        _portC = ppi._portC;
-        _control = ppi._control;
-    }
 
 private:
     enum IO
@@ -74,4 +60,17 @@ public:
 
     friend StreamWriter& operator<<(StreamWriter& s, const PPI& ppi);
     friend StreamReader& operator>>(StreamReader& s, PPI& ppi);
+
+    friend std::ostringstream& operator<<(std::ostringstream& s, const PPI& ppi);
+
+    SERIALIZE_MEMBERS(
+        _printerReady,
+        _exp,
+        _refreshRate,
+        _manufacturer,
+        _tapeWriteData,
+        _portA,
+        _portB,
+        _portC,
+        _control)
 };

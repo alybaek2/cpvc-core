@@ -5,6 +5,10 @@
 #include "FDD.h"
 #include "Disk.h"
 
+#include "Phase.h"
+
+#include "Serialize.h"
+
 // Status bits
 constexpr byte statusDrive0Busy = 0x01;
 constexpr byte statusDrive1Busy = 0x02;
@@ -114,6 +118,10 @@ constexpr byte commandLengths[32] = {
     1
 };
 
+StreamWriter& operator<<(StreamWriter& s, const Phase& phase);
+StreamReader& operator>>(StreamReader& s, Phase& phase);
+
+
 constexpr byte readBufferSize = 4;
 
 // Class representing the floppy drive controller.
@@ -122,14 +130,6 @@ class FDC : public IBus
 public:
     FDC();
     ~FDC();
-
-    void CopyFrom(const FDC& fdc)
-    {
-        //_drives[0] = fdc._drives[0];
-        //_drives[1] = fdc._drives[1];
-        _drives[0].CopyFrom(fdc._drives[0]);
-        _drives[1].CopyFrom(fdc._drives[1]);
-    }
 
     // Note that while the FDC technically does support 4 drives, the DS1 (Drive Select 1)
     // pin is physically disconnected on the CPC, meaning only 2 drives can be supported.
@@ -150,7 +150,7 @@ public:
     void Write(word addr, byte b);
 
 private:
-    signed char _readTimeout;
+    int8_t _readTimeout;
 
     byte _mainStatus;
     byte _data;
@@ -162,13 +162,6 @@ private:
 
     bool _seekCompleted[2];
     bool _statusChanged[2];
-
-    enum Phase
-    {
-        phCommand,
-        phExecute,
-        phResult
-    };
 
     Phase _phase;
     byte _commandBytes[100];
@@ -193,7 +186,7 @@ private:
     byte GetStatus() const;
     byte GetData();
     void SetDataDirection(byte direction);
-    void SetPhase(FDC::Phase p);
+    void SetPhase(Phase p);
     void SelectDrive(byte dsByte);
     FDD& CurrentDrive();
     void PushReadBuffer(byte data);
@@ -222,7 +215,34 @@ private:
     friend StreamWriter& operator<<(StreamWriter& s, const FDC& fdc);
     friend StreamReader& operator>>(StreamReader& s, FDC& fdc);
 
-    friend StreamWriter& operator<<(StreamWriter& s, const Phase& fdc);
-    friend StreamReader& operator>>(StreamReader& s, Phase& fdc);
-};
+    friend std::ostringstream& operator<<(std::ostringstream& s, const FDC& fdc);
 
+public:
+    SERIALIZE_MEMBERS(
+        _drives,
+        _readTimeout,
+        _mainStatus,
+        _data,
+        _dataDirection,
+        _motor,
+        _currentDrive,
+        _currentHead,
+        _status,
+        _seekCompleted,
+        _statusChanged,
+        _phase,
+        _commandBytes,
+        _commandByteCount,
+        _execBytes,
+        _execByteCount,
+        _execIndex,
+        _resultBytes,
+        _resultByteCount,
+        _resultIndex,
+        _stepReadTime,
+        _headLoadTime,
+        _headUnloadTime,
+        _nonDmaMode,
+        _readBuffer,
+        _readBufferIndex)
+};

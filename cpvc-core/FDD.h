@@ -1,8 +1,10 @@
 #pragma once
 
 #include "common.h"
-
+#include "stringify.h"
 #include "Disk.h"
+
+#include "Serialize.h"
 
 struct CHRN
 {
@@ -27,26 +29,24 @@ public:
     FDD();
     ~FDD();
 
-    void CopyFrom(const FDD& fdd)
-    {
-        _currentSector = fdd._currentSector;
-        _currentTrack = fdd._currentTrack;
-        _hasDisk = fdd._hasDisk;
-        _disk = fdd._disk;
-    }
-
     // Member variables describing the location of the read head.
     byte _currentSector;
     size_t _currentTrack;
 
-    bool _hasDisk;
-    Disk _disk;
+    Disk _tempDisk;
+    bool _tempDiskLoaded;
+
+    std::unique_ptr<bytevector> _diskImage;
+
+    Disk& GetDisk();
 
     void Init();
 
     void Eject();
 
-    bool Load(Disk& d);
+    bool Load(Disk& d, const bytevector& image);
+
+    bool HasDisk() const { return _diskImage != nullptr; }
 
     // Floppy Drive functions...
     bool IsReady();
@@ -85,8 +85,12 @@ public:
 
     byte GetTrack();
 
+    SERIALIZE_MEMBERS_WITH_POSTREAD(_currentSector, _currentTrack, _diskImage);
+    void SerializePostRead() { _tempDiskLoaded = false; }
+
 private:
     friend StreamWriter& operator<<(StreamWriter& s, const FDD& fdd);
     friend StreamReader& operator>>(StreamReader& s, FDD& fdd);
-};
 
+    friend std::ostringstream& operator<<(std::ostringstream& s, const FDD& fdc);
+};
