@@ -49,7 +49,8 @@ jobs:
     #  run: x64\Release\cpvc-core-test.exe
 
     - name: Generate code coverage
-      run: "%ProgramFiles%\\OpenCppCoverage\\OpenCppCoverage.exe --modules cpvc-core-test --sources=cpvc-core --excluded_sources=cpvc-core-test --export_type cobertura:cpvc-core-coverage.xml x64\\Debug\\cpvc-core-test.exe"
+      run: |
+        &"C:\\Program Files\\OpenCppCoverage\\OpenCppCoverage.exe" --modules cpvc-core-test --sources=cpvc-core --excluded_sources=cpvc-core-test --export_type cobertura:cpvc-core-coverage.xml x64\\Debug\\cpvc-core-test.exe
 
     - name: Process code coverage
       run: .\ReportGenerator.4.3.6\tools\net47\ReportGenerator.exe -targetdir:. -reporttypes:Cobertura -sourcedirs:. -reports:cpvc-core-coverage.xml
