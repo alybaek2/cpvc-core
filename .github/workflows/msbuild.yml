@@ -25,6 +25,9 @@ jobs:
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: nuget restore ${{env.SOLUTION_FILE_PATH}}
 
+    - name: Install ReportGenerator
+      run: nuget install ReportGenerator -Version 4.3.6
+
     #- name: Build Release
     #  working-directory: ${{env.GITHUB_WORKSPACE}}
     #  # Add additional options to the MSBuild command line here (like platform or verbosity level).
@@ -44,3 +47,10 @@ jobs:
       uses: crazy-max/ghaction-chocolatey@v1
       with:
         args: install opencppcoverage
+
+    - name: Generate code coverage
+      run: %ProgramFiles%\OpenCppCoverage\OpenCppCoverage.exe --modules cpvc-core-test --sources=cpvc-core --excluded_sources=cpvc-core-test --export_type cobertura:cpvc-core-coverage.xml "x64\Debug\cpvc-core-test.exe"
+
+    - name: Process code coverage
+      run: ".\ReportGenerator.4.3.6\tools\net47\ReportGenerator.exe" -targetdir:. -reporttypes:Cobertura -sourcedirs:. -reports:cpvc-core-coverage.xml
+
