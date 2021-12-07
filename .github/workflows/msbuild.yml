@@ -21,6 +21,11 @@ jobs:
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
 
+    - name: Install OpenCPPCoverage with Chocolatey
+      uses: crazy-max/ghaction-chocolatey@v1
+      with:
+        args: install opencppcoverage
+
     - name: Restore NuGet packages
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: nuget restore ${{env.SOLUTION_FILE_PATH}}
@@ -42,11 +47,6 @@ jobs:
 
     #- name: Test
     #  run: x64\Release\cpvc-core-test.exe
-
-    - name: Install OpenCPPCoverage with Chocolatey
-      uses: crazy-max/ghaction-chocolatey@v1
-      with:
-        args: install opencppcoverage
 
     - name: Generate code coverage
       run: "C:\\Program Files\\OpenCppCoverage\\OpenCppCoverage.exe" --modules cpvc-core-test --sources=cpvc-core --excluded_sources=cpvc-core-test --export_type cobertura:cpvc-core-coverage.xml "x64\Debug\cpvc-core-test.exe"
