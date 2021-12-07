@@ -45,8 +45,8 @@ jobs:
       # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
       run: msbuild /m /t:Rebuild /p:Configuration=Debug /p:Platform="x64" ${{env.SOLUTION_FILE_PATH}}
 
-    - name: Test
-      run: x64\Release\cpvc-core-test.exe
+    #- name: Test
+    #  run: x64\Release\cpvc-core-test.exe
 
     - name: Generate code coverage
       run: "%ProgramFiles%\\OpenCppCoverage\\OpenCppCoverage.exe --modules cpvc-core-test --sources=cpvc-core --excluded_sources=cpvc-core-test --export_type cobertura:cpvc-core-coverage.xml x64\\Debug\\cpvc-core-test.exe"
