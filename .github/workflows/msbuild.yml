@@ -33,6 +33,9 @@ jobs:
     - name: Install ReportGenerator
       run: nuget install ReportGenerator -Version 4.3.6
 
+    - name: Install Codecov reporter
+      run: nuget install Codecov -Version 1.12.0
+
     #- name: Build Release
     #  working-directory: ${{env.GITHUB_WORKSPACE}}
     #  # Add additional options to the MSBuild command line here (like platform or verbosity level).
@@ -54,4 +57,7 @@ jobs:
 
     - name: Process code coverage
       run: .\ReportGenerator.4.3.6\tools\net47\ReportGenerator.exe -targetdir:. -reporttypes:Cobertura -sourcedirs:. -reports:cpvc-core-coverage.xml
+
+    - name: Upload code coverage report
+      run: .\Codecov.1.12.0\tools\win7-x86\codecov.exe --branch ${{github.ref_name}} --build ${{github.run_number}} --sha ${{github.sha}} --file "Cobertura.xml" --token ${{secrets.CORE_CODECOV_TOKEN}}
 
