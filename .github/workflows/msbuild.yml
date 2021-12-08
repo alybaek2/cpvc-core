@@ -87,6 +87,12 @@ jobs:
         path: cpvc-core-test.xml
         reporter: jest-junit
 
+    - name: Report 2
+      uses: EnricoMi/publish-unit-test-result-action/composite@v1
+      if: always()
+      with:
+        files: cpvc-core-test.xml
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
       with:
