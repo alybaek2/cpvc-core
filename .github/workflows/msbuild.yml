@@ -77,10 +77,17 @@ jobs:
     - name: Test
       run: .\\cpvc-core-test.exe
 
+    - name: Report
+      uses: dorny/test-reporter@v1
+      with:
+        name: Unit Tests
+        path: cpvc-core-test.xml
+        reporter: jest-junit
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: cpvccoretest-release
+        name: cpvc-core-test
         path: cpvc-core-test.xml
 
   coverage:
