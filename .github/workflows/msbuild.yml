@@ -40,7 +40,7 @@ jobs:
 
   build:
     name: Test and coverage
-    needs: builddebug, buildrelease
+    needs: [builddebug, buildrelease]
     runs-on: windows-latest
 
     steps:
