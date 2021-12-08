@@ -1,4 +1,4 @@
-name: MSBuild
+name: Build, Test, and Generate Code Coverage
 
 on: [push]
 
@@ -6,17 +6,14 @@ env:
   # Path to the solution file relative to the root of the project.
   SOLUTION_FILE_PATH: cpvc-core.sln
 
-  # Configuration type to build.
-  # You can convert this to a build matrix if you need coverage of multiple configuration types.
-  # https://docs.github.com/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-  BUILD_CONFIGURATION: Release
-
 jobs:
   builddebug:
+    name: Build Debug
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout files
+      uses: actions/checkout@v2
 
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
@@ -38,10 +35,12 @@ jobs:
           x64\\Debug\\cpvc-core-test.pdb
 
   buildrelease:
+    name: Build Release
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout files
+      uses: actions/checkout@v2
 
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
@@ -82,7 +81,8 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout files
+      uses: actions/checkout@v2
 
     - name: Downloadtest binaries
       uses: actions/download-artifact@v2
