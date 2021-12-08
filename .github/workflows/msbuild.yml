@@ -74,7 +74,7 @@ jobs:
         name: cpvccoretest-release
 
     - name: Test
-      run: cpvc-core-test.exe
+      run: .\\cpvc-core-test.exe
 
   coverage:
     name: Code coverage
