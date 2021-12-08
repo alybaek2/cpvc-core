@@ -12,7 +12,7 @@ env:
   BUILD_CONFIGURATION: Release
 
 jobs:
-  builddebug:
+  setup:
     runs-on: windows-latest
 
     steps:
@@ -21,19 +21,24 @@ jobs:
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
 
+    - name: Restore NuGet packages
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: nuget restore ${{env.SOLUTION_FILE_PATH}}
+
+  builddebug:
+    needs: setup
+    runs-on: windows-latest
+
+    steps:
     - name: Build Debug
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: msbuild /m /t:Rebuild /p:Configuration=Debug /p:Platform="x64" ${{env.SOLUTION_FILE_PATH}}
 
   buildrelease:
+    needs: setup
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v2
-
-    - name: Add MSBuild to PATH
-      uses: microsoft/setup-msbuild@v1.0.2
-
     - name: Build Release
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: msbuild /m /t:Rebuild /p:Configuration=Release /p:Platform="x64" ${{env.SOLUTION_FILE_PATH}}
