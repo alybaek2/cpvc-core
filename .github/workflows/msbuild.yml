@@ -65,6 +65,8 @@ jobs:
     name: Test
     needs: buildrelease
     runs-on: windows-latest
+    env:
+      GTEST_OUTPUT: "xml:cpvc-core-test.xml"
 
     steps:
     - name: Download test binaries
@@ -74,6 +76,12 @@ jobs:
 
     - name: Test
       run: .\\cpvc-core-test.exe
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: cpvccoretest-release
+        path: cpvc-core-test.xml
 
   coverage:
     name: Code coverage
@@ -109,3 +117,11 @@ jobs:
 
     - name: Upload code coverage report
       run: .\Codecov.1.12.0\tools\win7-x86\codecov.exe --branch ${{github.ref_name}} --build ${{github.run_number}} --sha ${{github.sha}} --file "Cobertura.xml" --token ${{secrets.CORE_CODECOV_TOKEN}}
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: code-coverage
+        path: |
+          cpvc-core-coverage.xml
+          Cobertura.xml
