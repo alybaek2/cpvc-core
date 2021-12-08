@@ -12,7 +12,7 @@ env:
   BUILD_CONFIGURATION: Release
 
 jobs:
-  setup:
+  builddebug:
     runs-on: windows-latest
 
     steps:
@@ -25,38 +25,72 @@ jobs:
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: nuget restore ${{env.SOLUTION_FILE_PATH}}
 
-  builddebug:
-    needs: setup
-    runs-on: windows-latest
-
-    steps:
     - name: Build Debug
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: msbuild /m /t:Rebuild /p:Configuration=Debug /p:Platform="x64" ${{env.SOLUTION_FILE_PATH}}
 
-  buildrelease:
-    needs: setup
-    runs-on: windows-latest
-
-    steps:
-    - name: Build Release
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: msbuild /m /t:Rebuild /p:Configuration=Release /p:Platform="x64" ${{env.SOLUTION_FILE_PATH}}
-
-  build:
-    name: Test and coverage
-    needs: [builddebug, buildrelease]
-    runs-on: windows-latest
-
-    steps:
-    - name: Install OpenCPPCoverage with Chocolatey
-      uses: crazy-max/ghaction-chocolatey@v1
+    - name: Upload test binaries
+      uses: actions/upload-artifact@v2
       with:
-        args: install opencppcoverage
+        name: cpvccoretest-debug
+        path: |
+          x64\\Debug\\cpvc-core-test.exe
+          x64\\Debug\\cpvc-core-test.pdb
+
+  buildrelease:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
 
     - name: Restore NuGet packages
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: nuget restore ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Build Release
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild /m /t:Rebuild /p:Configuration=Release /p:Platform="x64" ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Upload test binaries
+      uses: actions/upload-artifact@v2
+      with:
+        name: cpvccoretest-release
+        path: |
+          x64\\Release\\cpvc-core-test.exe
+          x64\\Release\\cpvc-core-test.pdb
+
+  test:
+    name: Test
+    needs: buildrelease
+    runs-on: windows-latest
+
+    steps:
+    - name: Downloadtest binaries
+      uses: actions/download-artifact@v2
+      with:
+        name: cpvccoretest-release
+
+    - name: Test
+      run: cpvc-core-test.exe
+
+  coverage:
+    name: Code coverage
+    needs: builddebug
+    runs-on: windows-latest
+
+    steps:
+    - name: Downloadtest binaries
+      uses: actions/download-artifact@v2
+      with:
+        name: cpvccoretest-debug
+
+    - name: Install OpenCPPCoverage with Chocolatey
+      uses: crazy-max/ghaction-chocolatey@v1
+      with:
+        args: install opencppcoverage
 
     - name: Install ReportGenerator
       run: nuget install ReportGenerator -Version 4.3.6
@@ -64,12 +98,9 @@ jobs:
     - name: Install Codecov reporter
       run: nuget install Codecov -Version 1.12.0
 
-    - name: Test
-      run: x64\Release\cpvc-core-test.exe
-
     - name: Generate code coverage
       run: |
-        &"C:\\Program Files\\OpenCppCoverage\\OpenCppCoverage.exe" --modules cpvc-core-test --sources=cpvc-core --excluded_sources=cpvc-core-test --export_type cobertura:cpvc-core-coverage.xml x64\\Debug\\cpvc-core-test.exe
+        &"C:\\Program Files\\OpenCppCoverage\\OpenCppCoverage.exe" --modules cpvc-core-test --sources=cpvc-core --excluded_sources=cpvc-core-test --export_type cobertura:cpvc-core-coverage.xml cpvc-core-test.exe
 
     - name: Process code coverage
       run: .\ReportGenerator.4.3.6\tools\net47\ReportGenerator.exe -targetdir:. -reporttypes:Cobertura -sourcedirs:. -reports:cpvc-core-coverage.xml
