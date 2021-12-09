@@ -11,7 +11,7 @@ TEST(KeyboardTests, InvalidLine) {
     bool b = keyboard.KeyPress(11, 0, true);
 
     // Verify
-    ASSERT_EQ(b, false);
+    ASSERT_EQ(b, true);
 }
 
 TEST(KeyboardTests, InvalidBit)
