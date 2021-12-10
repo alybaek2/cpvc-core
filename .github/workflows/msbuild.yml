@@ -8,7 +8,7 @@ env:
 
 jobs:
   builddebug:
-    name: Build Debug
+    name: Build debug
     runs-on: windows-latest
 
     steps:
@@ -22,7 +22,7 @@ jobs:
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: nuget restore ${{env.SOLUTION_FILE_PATH}}
 
-    - name: Build Debug
+    - name: Build debug
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: msbuild /m /t:Rebuild /p:Configuration=Debug /p:Platform="x64" ${{env.SOLUTION_FILE_PATH}}
 
@@ -35,7 +35,7 @@ jobs:
           x64\\Debug\\cpvc-core-test.pdb
 
   buildrelease:
-    name: Build Release
+    name: Build release
     runs-on: windows-latest
 
     steps:
@@ -49,7 +49,7 @@ jobs:
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: nuget restore ${{env.SOLUTION_FILE_PATH}}
 
-    - name: Build Release
+    - name: Build release
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: msbuild /m /t:Rebuild /p:Configuration=Release /p:Platform="x64" ${{env.SOLUTION_FILE_PATH}}
 
