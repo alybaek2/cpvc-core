@@ -1,0 +1,137 @@
+name: Build, Test, and Generate Code Coverage
+
+on: [push]
+
+env:
+  # Path to the solution file relative to the root of the project.
+  SOLUTION_FILE_PATH: cpvc-core.sln
+
+jobs:
+  builddebug:
+    name: Build debug
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout files
+      uses: actions/checkout@v2
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+
+    - name: Restore NuGet packages
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: nuget restore ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Build debug
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild /m /t:Rebuild /p:Configuration=Debug /p:Platform="x64" ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Upload test binaries
+      uses: actions/upload-artifact@v2
+      with:
+        name: cpvccoretest-debug
+        path: |
+          x64\\Debug\\cpvc-core-test.exe
+          x64\\Debug\\cpvc-core-test.pdb
+
+  buildrelease:
+    name: Build release
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout files
+      uses: actions/checkout@v2
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+
+    - name: Restore NuGet packages
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: nuget restore ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Build release
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild /m /t:Rebuild /p:Configuration=Release /p:Platform="x64" ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Upload test binaries
+      uses: actions/upload-artifact@v2
+      with:
+        name: cpvccoretest-release
+        path: |
+          x64\\Release\\cpvc-core-test.exe
+          x64\\Release\\cpvc-core-test.pdb
+
+  test:
+    name: Test
+    needs: buildrelease
+    runs-on: windows-latest
+    env:
+      GTEST_OUTPUT: "xml:cpvc-core-test.xml"
+
+    steps:
+    - name: Checkout files
+      uses: actions/checkout@v2
+
+    - name: Download test binaries
+      uses: actions/download-artifact@v2
+      with:
+        name: cpvccoretest-release
+
+    - name: Run tests
+      run: .\\cpvc-core-test.exe
+
+    - name: Annotate job with results
+      uses: EnricoMi/publish-unit-test-result-action/composite@v1
+      if: always()
+      with:
+        files: cpvc-core-test.xml
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2
+      if: always()
+      with:
+        name: cpvc-core-test
+        path: cpvc-core-test.xml
+
+  coverage:
+    name: Code coverage
+    needs: builddebug
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout files
+      uses: actions/checkout@v2
+
+    - name: Download test binaries
+      uses: actions/download-artifact@v2
+      with:
+        name: cpvccoretest-debug
+
+    - name: Install OpenCPPCoverage with Chocolatey
+      uses: crazy-max/ghaction-chocolatey@v1
+      with:
+        args: install opencppcoverage
+
+    - name: Install ReportGenerator
+      run: nuget install ReportGenerator -Version 4.3.6
+
+    - name: Install Codecov reporter
+      run: nuget install Codecov -Version 1.12.0
+
+    - name: Generate code coverage
+      run: |
+        &"C:\\Program Files\\OpenCppCoverage\\OpenCppCoverage.exe" --modules cpvc-core-test --sources=cpvc-core --excluded_sources=cpvc-core-test --export_type cobertura:cpvc-core-coverage.xml cpvc-core-test.exe
+
+    - name: Process code coverage
+      run: .\ReportGenerator.4.3.6\tools\net47\ReportGenerator.exe -targetdir:. -reporttypes:Cobertura -sourcedirs:. -reports:cpvc-core-coverage.xml
+
+    - name: Upload code coverage report
+      run: .\Codecov.1.12.0\tools\win7-x86\codecov.exe --branch ${{github.ref_name}} --build ${{github.run_number}} --sha ${{github.sha}} --file "Cobertura.xml" --token ${{secrets.CORE_CODECOV_TOKEN}}
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: code-coverage
+        path: |
+          cpvc-core-coverage.xml
+          Cobertura.xml

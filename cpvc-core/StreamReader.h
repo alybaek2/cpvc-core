@@ -3,6 +3,7 @@
 #include "common.h"
 #include "StreamWriter.h"
 #include <map>
+#include <stdexcept>
 #include <vector>
 
 class StreamReader
