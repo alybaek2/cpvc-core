@@ -45,7 +45,7 @@ public:
     std::shared_ptr<CoreSnapshot> _currentSnapshot;
 
     bool CreateSnapshot(int id);
-    void DeleteSnapshot(int id);
+    bool DeleteSnapshot(int id);
     bool RevertToSnapshot(int id);
 
     void Init();

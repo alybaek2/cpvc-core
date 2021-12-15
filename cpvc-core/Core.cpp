@@ -1624,9 +1624,9 @@ bool Core::CreateSnapshot(int id)
     return true;
 }
 
-void Core::DeleteSnapshot(int id)
+bool Core::DeleteSnapshot(int id)
 {
-    _newSnapshots.erase(id);
+    return _newSnapshots.erase(id) != 0;
 }
 
 bool Core::RevertToSnapshot(int id)

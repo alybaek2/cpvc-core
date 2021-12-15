@@ -32,9 +32,9 @@ namespace CPvC {
             return _pCore->CreateSnapshot(id);
         }
 
-        void DeleteSnapshot(int id)
+        bool DeleteSnapshot(int id)
         {
-            _pCore->DeleteSnapshot(id);
+            return _pCore->DeleteSnapshot(id);
         }
 
         bool RevertToSnapshot(int id)
