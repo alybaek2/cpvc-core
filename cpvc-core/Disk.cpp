@@ -101,6 +101,8 @@ bool Disk::LoadDiskV2(const byte* pBuffer, int size)
     const byte* pTrackSizeTable = pBuffer + 0x34;
     const byte* pTrackInfo = pBuffer + 0x100;
 
+    _tracks.clear();
+
     for (byte trackNumber = 0; trackNumber < tracksCount; trackNumber++)
     {
         for (byte sideNumber = 0; sideNumber < sideCount; sideNumber++)
