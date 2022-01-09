@@ -76,7 +76,7 @@ void Core::SetScreen(word pitch, word height, word width)
     _scrWidth = width / 16;  // _scrWidth is in CRTC chars (16 pixels per char).
     _scrHeight = height;
 
-    _screen.resize(height * pitch);
+    _screen.resize(static_cast<size_t>(height) * static_cast<size_t>(pitch));
 }
 
 void Core::CopyScreen(byte* pBuffer, size_t size)
@@ -1614,14 +1614,12 @@ std::ostringstream& operator<<(std::ostringstream& s, const Core& core)
     return s;
 }
 
-bool Core::CreateSnapshot(int id)
+void Core::CreateSnapshot(int id)
 {
     std::shared_ptr<CoreSnapshot> currentSnapshot = std::make_shared<CoreSnapshot>(*this, _lastSnapshot);
 
     _newSnapshots[id] = currentSnapshot;    
     _lastSnapshot = currentSnapshot;
-
-    return true;
 }
 
 bool Core::DeleteSnapshot(int id)
