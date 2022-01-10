@@ -870,7 +870,7 @@ private:
     void ADD(const byte b, bool carry)
     {
         byte previousA = A;
-        signed short carryAddend = ((carry & ((F & flagC) != 0)) ? 1 : 0);
+        signed short carryAddend = ((carry && ((F & flagC) != 0)) ? 1 : 0);
         signed short addend = b + carryAddend;
         signed short result = A + addend;
         A = (byte)result;
@@ -889,7 +889,7 @@ private:
     void SUB(byte& a, const byte b, bool carry)
     {
         byte previousA = A;
-        word subtrahend = b + ((carry & ((F & flagC) != 0)) ? 1 : 0);
+        word subtrahend = b + ((carry && ((F & flagC) != 0)) ? 1 : 0);
         word result = A - subtrahend;
         a = (byte)result;
         F =

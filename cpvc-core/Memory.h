@@ -189,7 +189,7 @@ public:
 
     friend std::ostringstream& operator<<(std::ostringstream& s, const Memory& memory)
     {
-        for (const Mem16k bank : memory._banks)
+        for (const Mem16k& bank : memory._banks)
         {
             s << "Memory (16k): " << StringifyByteArray(bank) << std::endl;
         }
