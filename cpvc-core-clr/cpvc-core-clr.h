@@ -26,6 +26,8 @@ namespace CPvC {
 
         !CoreCLR()
         {
+            msclr::lock l(_lockObject);
+
             delete _pCore;
             _pCore = nullptr;
         }
@@ -119,7 +121,10 @@ namespace CPvC {
         {
             msclr::lock l(_lockObject);
 
-            _pCore->CopyScreen((byte*)pBuffer.ToPointer(), size);
+            if (_pCore != nullptr)
+            {
+                _pCore->CopyScreen((byte*)pBuffer.ToPointer(), size);
+            }
         }
 
         bool KeyPress(byte keycode, bool down)
