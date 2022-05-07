@@ -79,14 +79,22 @@ void Core::SetScreen(word pitch, word height, word width)
     _screen.resize(static_cast<size_t>(height) * static_cast<size_t>(pitch));
 }
 
-void Core::CopyScreen(byte* pBuffer, size_t size)
+void Core::SetScreen(byte* pBuffer, size_t size)
+{
+    memcpy_s(_screen.data(), _screen.size(), pBuffer, size);
+}
+
+size_t Core::GetScreen(byte* pBuffer, size_t size)
 {
     if (pBuffer == nullptr)
     {
-        return;
+        return _screen.size();
     }
 
-    memcpy_s(pBuffer, size, _screen.data(), _screen.size());
+    size_t bytesToCopy = std::min(size, _screen.size());
+    memcpy(pBuffer, _screen.data(), bytesToCopy);
+
+    return bytesToCopy;
 }
 
 void Core::SetFrequency(dword frequency)

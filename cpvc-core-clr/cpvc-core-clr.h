@@ -117,14 +117,40 @@ namespace CPvC {
             _pCore->SetScreen(pitch, height, width);
         }
 
-        void CopyScreen(IntPtr pBuffer, UInt64 size)
+        void SetScreen(array<byte>^ screen)
+        {
+            msclr::lock l(_lockObject);
+
+            pin_ptr<byte> buffer = &screen[0];
+            _pCore->SetScreen(buffer, screen->Length);
+        }
+
+        void GetScreen(IntPtr pBuffer, UInt64 size)
         {
             msclr::lock l(_lockObject);
 
             if (_pCore != nullptr)
             {
-                _pCore->CopyScreen((byte*)pBuffer.ToPointer(), size);
+                _pCore->GetScreen((byte*)pBuffer.ToPointer(), size);
             }
+        }
+
+        array<byte>^ GetScreen()
+        {
+            msclr::lock l(_lockObject);
+
+            array<byte>^ screen = nullptr;
+
+            if (_pCore != nullptr)
+            {
+                size_t size = _pCore->GetScreen(nullptr, 0);
+
+                screen = gcnew array<byte>((int)size);
+                pin_ptr<byte> buffer = &screen[0];
+                _pCore->GetScreen(buffer, screen->Length);
+            }
+
+            return screen;
         }
 
         bool KeyPress(byte keycode, bool down)

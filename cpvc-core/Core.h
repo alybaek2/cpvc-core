@@ -55,7 +55,8 @@ public:
     void LoadDisc(byte drive, const byte* pBuffer, int size);
 
     void SetScreen(word pitch, word height, word width);
-    void CopyScreen(byte* pBuffer, size_t size);
+    void SetScreen(byte* pBuffer, size_t size);
+    size_t GetScreen(byte* pBuffer, size_t size);
 
     void SetFrequency(dword frequency);
 
