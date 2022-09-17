@@ -290,6 +290,10 @@ StreamReader& operator>>(StreamReader& s, FDD& fdd)
         fdd._diskImage = std::make_unique<bytevector>();
         s >> *fdd._diskImage;
     }
+    else
+    {
+        fdd._diskImage.reset();
+    }
 
     fdd._tempDiskLoaded = false;
 
